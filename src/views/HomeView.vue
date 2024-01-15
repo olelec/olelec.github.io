@@ -29,6 +29,9 @@ export default {
 .under-construction {
   text-align: center;
 }
+.under-construction {
+  text-align: center;
+}
 
 #logo {
   font-family: "Allerta Stencil", sans-serif;
