@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-  <title>TerraBuild</title>
+  <title>TerraBuild - Address</title>
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Allerta+Stencil&display=swap");
 
@@ -147,6 +147,9 @@
       max-width: 100px;
       /* Set a maximum width to ensure consistency */
     }
+        .active { font-weight: bold; }
+        .address-line { display: none; }
+        .E-code { margin-top: 20px; }
   </style>
 </head>
 <header>
@@ -157,13 +160,59 @@
 <div id="logo">TerraBuild</div>
 <div class="location section">
   <h1>Address</h1>
-  <p>We are based in West Cork but operate throughout Ireland. You can frequently find us working in Cork, Limerick,
-    Waterford, Kerry, Galway, Dublin, and more</p>
+<div class="address-list">
+  <div id="address-en" class="address">
+    <div>DONAL O'LEARY ELECTRICAL LTD.</div>
+    <div>AHALISKY</div>
+    <div>BALLINASCARTHY</div>
+    <div>CLONAKILTY</div>
+    <div>CO. CORK</div>
+  </div>
+  <div id="address-ga" class="address address-line">
+    <div>DONAL O'LEARY ELECTRICAL LTD.</div>
+    <div>ACHADH LOISCTHE</div>
+    <div>BÉAL NA SCAIRTE</div>
+    <div>CLOICH NA COILLTE</div>
+    <div>CO. CHORCAÍ</div>
+  </div>
+  <div class="E-code">
+    <span>P85 PP93</span>
+  </div>
+  <br/>
+  <span class="addresslist-language">
+      <a href="#" id="lang-en" onclick="showAddress('en'); return false;" class="active">English</a> | 
+      <a href="#" id="lang-ga" onclick="showAddress('ga'); return false;">Gaeilge</a>
+  </span>
+</div>
+  <br/>
+<script>
+function showAddress(lang) {
+    var enAddress = document.getElementById('address-en');
+    var gaAddress = document.getElementById('address-ga');
+    var enLang = document.getElementById('lang-en');
+    var gaLang = document.getElementById('lang-ga');
+    
+    if (lang === 'en') {
+        enAddress.style.display = 'block';
+        gaAddress.style.display = 'none';
+        enLang.classList.add('active');
+        gaLang.classList.remove('active');
+    } else {
+        enAddress.style.display = 'none';
+        gaAddress.style.display = 'block';
+        gaLang.classList.add('active');
+        enLang.classList.remove('active');
+    }
+}
+
+// Initialize with English address visible
+showAddress('en');
+</script>
+
   <iframe
     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d9894.200621948483!2d-8.847461216656148!3d51.68637669967105!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x484457ff7fa97b93%3A0x497212848aa36000!2sAhalisky%2C%20Co.%20Cork%2C%20P85%20PP93!5e0!3m2!1sen!2sie!4v1705356054738!5m2!1sen!2sie"
     width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"
     referrerpolicy="no-referrer-when-downgrade"></iframe>
-  <p><strong>Laws Cross, Ahalisky, Ballinascarthy, Clonakilty, Co. Cork, P85 PP93</strong></p>
 </div>
 <br />
 </body>
