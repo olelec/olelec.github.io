@@ -1,27 +1,45 @@
-<script setup lang="ts">
-import { RouterView } from "vue-router";
+<script setup>
+import { RouterView, useRouter, RouterLink } from "vue-router";
+import { useMainStore } from "./store";
+import { computed } from "vue";
+
+const dataStore = useMainStore();
+const router = useRouter();
+
+const userEmail = computed(() => dataStore.getUserEmail);
 </script>
 
 <template>
   <body>
     <div class="top-bar">
-      <a href="tel:0878126549">📱 087 812 6549</a>
-      <a href="mailto:patricia@terrabuild.ie">✉️ patricia@terrabuild.ie</a>
+      <div class="auth-links">
+        <RouterLink v-if="userEmail !== ''" to="logout" class="auth"
+          >Logout</RouterLink
+        >
+        <RouterLink v-else to="login" class="auth">Login</RouterLink>
+      </div>
+
+      <div class="contact-info">
+        <a href="tel:0878126549">📱 087 812 6549</a>
+        <a href="mailto:patricia@terrabuild.ie">✉️ patricia@terrabuild.ie</a>
+      </div>
     </div>
 
     <nav>
-      <a href="#" class="logo">TerraBuild</a>
+      <RouterLink to="/" class="logo">TerraBuild</RouterLink>
       <div class="nav-links">
         <a href="#about">About</a>
         <a href="#memberships">Memberships</a>
         <a href="#contact">Contact</a>
       </div>
     </nav>
-    <RouterView />
+    <n-notification-provider>
+      <RouterView />
+    </n-notification-provider>
   </body>
 </template>
 
-<style>
+<style lang="scss">
 :root {
   --primary: #16ff05;
   --primary-dark: #12cc04;
@@ -55,14 +73,29 @@ body {
   color: white;
   padding: 0.5rem 5%;
   display: flex;
-  justify-content: flex-end;
-  gap: 2rem;
+  justify-content: space-between;
+  align-items: center;
+  .auth-links {
+    display: flex;
+    justify-content: flex-start;
+    gap: 2rem;
+  }
+
+  .contact-info {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2rem;
+  }
+}
+
+.top-bar .auth {
+  text-align: left;
 }
 
 .top-bar a {
   color: white;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
 }
 
 .nav-links a {
