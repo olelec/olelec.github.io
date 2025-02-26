@@ -62,7 +62,7 @@ body {
 .top-bar a {
   color: white;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
 }
 
 .nav-links a {

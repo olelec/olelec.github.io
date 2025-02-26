@@ -121,6 +121,10 @@
   padding: 0 5%;
 }
 
+p {
+  font-size: 1.2em;
+}
+
 .hero-content h1 {
   font-family: "Allerta Stencil", sans-serif;
   font-size: 3.5rem;
@@ -138,6 +142,7 @@ section {
 
 .about {
   background: var(--light);
+  text-align: center;
 }
 
 .services-grid {
@@ -197,6 +202,7 @@ section {
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
 .phone-numbers p,
