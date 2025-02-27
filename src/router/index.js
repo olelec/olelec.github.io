@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/auth/LoginView.vue";
 import StaffView from "../views/StaffView.vue";
+import TaxCalculatorView from "../views/TaxCalculator.vue";
 import { useAuthStore } from "../store/authStore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
@@ -18,6 +19,13 @@ const router = createRouter({
       name: "staff",
       component: StaffView,
       meta: { requiresAuth: true },
+      children: [
+        {
+          path: "tax-calculator",
+          name: "Tax Calculator",
+          component: TaxCalculatorView,
+        },
+      ],
     },
     {
       path: "/login",
