@@ -1,75 +1,12 @@
 <script setup lang="ts">
 import { RouterView, RouterLink } from "vue-router";
 import { useAuthStore } from "./store/authStore";
-import { computed, h } from "vue";
-import type { MenuOption } from "naive-ui";
-import router from "./router";
+import { computed } from "vue";
+import navigation from "@/components/navigation.vue";
 
 const authStore = useAuthStore();
 
 const userEmail = computed(() => authStore.getUserEmail);
-
-const menuOptions: MenuOption[] = computed(() => {
-  if (router.currentRoute.value.path === "/") {
-    return [
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: "/#about",
-            },
-            { default: () => "About" }
-          ),
-        key: "About",
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: "/#memberships",
-            },
-            { default: () => "Membership" }
-          ),
-        key: "Membership",
-      },
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: "/#contact",
-            },
-            { default: () => "Contact" }
-          ),
-        key: "Contact",
-      },
-    ];
-  } else if (router.currentRoute.value.path.includes("/staff")) {
-    return [
-      {
-        label: "Tools",
-        key: "home",
-        children: [
-          {
-            label: () =>
-              h(
-                RouterLink,
-                {
-                  to: "/staff/tax-calculator",
-                },
-                { default: () => "Tax Calculator" }
-              ),
-            key: "TaxCalculator",
-          },
-        ],
-      },
-      { label: "Jobs", key: "jobs" },
-      { label: "Admin", key: "admin" },
-    ];
-  }
-});
 </script>
 
 <template>
@@ -95,7 +32,7 @@ const menuOptions: MenuOption[] = computed(() => {
     <nav>
       <RouterLink to="/" class="logo">TerraBuild</RouterLink>
       <div class="nav-links">
-        <n-menu :options="menuOptions" mode="horizontal" />
+        <navigation mode="horizontal" />
       </div>
     </nav>
     <n-notification-provider>
@@ -155,16 +92,21 @@ body {
     justify-content: flex-end;
     gap: 2rem;
   }
-}
-
-.top-bar .auth {
-  text-align: left;
-}
-
-.top-bar a {
-  color: white;
-  text-decoration: none;
-  font-size: 1.2rem;
+  // if less than 600px wide stack contact info
+  @media (max-width: 600px) {
+    .contact-info {
+      flex-direction: column;
+      gap: 0rem;
+    }
+  }
+  .auth {
+    text-align: left;
+  }
+  a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+  }
 }
 
 .nav-links a {
