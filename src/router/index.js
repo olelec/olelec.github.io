@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "../store/authStore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/auth/LoginView.vue";
 import StaffView from "../views/StaffView.vue";
-import TaxCalculatorView from "../views/TaxCalculator.vue";
-import { useAuthStore } from "../store/authStore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import CalculatorView from "../views/CalculatorView.vue";
+import PageNotFoundView from "../views/PageNotFoundView.vue";
+import StaffDashboardView from "../views/StaffDashboardView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,9 +23,14 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         {
-          path: "tax-calculator",
-          name: "Tax Calculator",
-          component: TaxCalculatorView,
+          path: "",
+          name: "staff-dashboard",
+          component: StaffDashboardView,
+        },
+        {
+          path: "calculator",
+          name: "Calculator",
+          component: CalculatorView,
         },
       ],
     },
@@ -42,6 +49,11 @@ const router = createRouter({
         authStore.SET_AUTH_TOKEN("");
         next("/login");
       },
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "404",
+      component: PageNotFoundView,
     },
   ],
   scrollBehavior(to, from, savedPosition) {
