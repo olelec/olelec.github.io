@@ -51,6 +51,32 @@
     </div>
   </section>
 
+  <section class="work" id="work">
+    <div class="section-title">
+      <h2>Our Work</h2>
+    </div>
+    <div class="projects-grid">
+      <img src="../assets/Project1 (1).jpg" alt="Project 1 Image 1" />
+      <img src="../assets/Project1 (2).jpg" alt="Project 1 Image 2" />
+      <img src="../assets/Project1 (3).jpg" alt="Project 1 Image 3" />
+      <img src="../assets/Project1 (4).jpg" alt="Project 1 Image 4" />
+      <img src="../assets/Project1 (5).jpg" alt="Project 1 Image 5" />
+      <img src="../assets/Project1 (6).jpg" alt="Project 1 Image 6" />
+      <img src="../assets/Project2 (1).jpg" alt="Project 2 Image 1" />
+      <img src="../assets/Project2 (2).jpg" alt="Project 2 Image 2" />
+      <img src="../assets/Project2 (3).jpg" alt="Project 2 Image 3" />
+      <img src="../assets/Project2 (4).jpg" alt="Project 2 Image 4" />
+      <img src="../assets/Project3 (1).jpg" alt="Project 3 Image 1" />
+      <img src="../assets/Project3 (2).jpg" alt="Project 3 Image 2" />
+      <img src="../assets/Project3 (3).jpg" alt="Project 3 Image 3" />
+      <img src="../assets/Project3 (4).jpg" alt="Project 3 Image 4" />
+      <img src="../assets/Project3 (5).jpg" alt="Project 3 Image 5" />
+      <img src="../assets/Project3 (6).jpg" alt="Project 3 Image 6" />
+      <img src="../assets/Project3 (7).jpg" alt="Project 3 Image 7" />
+      <img src="../assets/Project3 (8).jpg" alt="Project 3 Image 8" />
+    </div>
+  </section>
+
   <section class="contact" id="contact">
     <div class="section-title">
       <h2>Contact Us</h2>
@@ -140,28 +166,28 @@ section {
   margin-bottom: 3rem;
 }
 
-.about {
+.projects {
   background: var(--light);
   text-align: center;
 }
 
-.services-grid {
+.projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-top: 3rem;
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
-.service-card {
-  background: white;
-  padding: 2rem;
+.projects-grid img {
+  width: 100%;
+  height: auto;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s;
 }
 
-.service-card:hover {
-  transform: translateY(-10px);
+.projects-grid img:hover {
+  transform: scale(1.5);
 }
 
 .memberships {
@@ -205,21 +231,6 @@ section {
   text-align: center;
 }
 
-.phone-numbers p,
-.locations {
-  margin: 5px 0;
-}
-
-a {
-  text-decoration: none;
-  color: #0073e6;
-  font-weight: bold;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
 .map-container {
   width: 100%;
   height: 450px;
@@ -231,26 +242,5 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
-}
-
-footer {
-  background: var(--secondary);
-  color: white;
-  padding: 2rem 5%;
-  text-align: center;
-}
-
-@media (max-width: 768px) {
-  .nav-links {
-    display: none;
-  }
-
-  .hero-content h1 {
-    font-size: 2.5rem;
-  }
-
-  section {
-    padding: 3rem 5%;
-  }
 }
 </style>
