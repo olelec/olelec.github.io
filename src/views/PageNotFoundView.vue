@@ -19,7 +19,7 @@
 }
 
 body {
-  font-family: allerta-stencil, sans-serif;
+  font-family: Allerta-Stencil, sans-serif;
   background: #f8f9fa;
   min-height: 100vh;
   display: flex;
