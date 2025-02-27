@@ -46,6 +46,17 @@ const menuOptions: MenuOption[] = computed(() => {
           h(
             RouterLink,
             {
+              to: "/#work",
+            },
+            { default: () => "Work" }
+          ),
+        key: "Work",
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
               to: "/#contact",
             },
             { default: () => "Contact" }
