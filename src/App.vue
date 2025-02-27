@@ -1,12 +1,11 @@
 <script setup>
-import { RouterView, useRouter, RouterLink } from "vue-router";
-import { useMainStore } from "./store";
+import { RouterView, RouterLink } from "vue-router";
+import { useAuthStore } from "./store/authStore";
 import { computed } from "vue";
 
-const dataStore = useMainStore();
-const router = useRouter();
+const authStore = useAuthStore();
 
-const userEmail = computed(() => dataStore.getUserEmail);
+const userEmail = computed(() => authStore.getUserEmail);
 </script>
 
 <template>
