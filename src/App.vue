@@ -1,11 +1,48 @@
-<script setup>
+<script setup lang="ts">
 import { RouterView, RouterLink } from "vue-router";
 import { useAuthStore } from "./store/authStore";
-import { computed } from "vue";
+import { computed, h } from "vue";
+import type { MenuOption } from "naive-ui";
 
 const authStore = useAuthStore();
 
 const userEmail = computed(() => authStore.getUserEmail);
+
+const menuOptions: MenuOption[] = [
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: "/#about",
+        },
+        { default: () => "About" }
+      ),
+    key: "About",
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: "/#memberships",
+        },
+        { default: () => "Membership" }
+      ),
+    key: "Membership",
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: "/#contact",
+        },
+        { default: () => "Contact" }
+      ),
+    key: "Contact",
+  },
+];
 </script>
 
 <template>
@@ -27,9 +64,7 @@ const userEmail = computed(() => authStore.getUserEmail);
     <nav>
       <RouterLink to="/" class="logo">TerraBuild</RouterLink>
       <div class="nav-links">
-        <a href="#about">About</a>
-        <a href="#memberships">Memberships</a>
-        <a href="#contact">Contact</a>
+        <n-menu :options="menuOptions" mode="horizontal" />
       </div>
     </nav>
     <n-notification-provider>
