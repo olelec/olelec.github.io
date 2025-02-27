@@ -3,53 +3,84 @@ import { RouterView, RouterLink } from "vue-router";
 import { useAuthStore } from "./store/authStore";
 import { computed, h } from "vue";
 import type { MenuOption } from "naive-ui";
+import router from "./router";
 
 const authStore = useAuthStore();
 
 const userEmail = computed(() => authStore.getUserEmail);
 
-const menuOptions: MenuOption[] = [
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: "/#about",
-        },
-        { default: () => "About" }
-      ),
-    key: "About",
-  },
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: "/#memberships",
-        },
-        { default: () => "Membership" }
-      ),
-    key: "Membership",
-  },
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: "/#contact",
-        },
-        { default: () => "Contact" }
-      ),
-    key: "Contact",
-  },
-];
+const menuOptions: MenuOption[] = computed(() => {
+  if (router.currentRoute.value.path === "/") {
+    return [
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: "/#about",
+            },
+            { default: () => "About" }
+          ),
+        key: "About",
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: "/#memberships",
+            },
+            { default: () => "Membership" }
+          ),
+        key: "Membership",
+      },
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: "/#contact",
+            },
+            { default: () => "Contact" }
+          ),
+        key: "Contact",
+      },
+    ];
+  } else if (router.currentRoute.value.path.includes("/staff")) {
+    return [
+      {
+        label: "Tools",
+        key: "home",
+        children: [
+          {
+            label: () =>
+              h(
+                RouterLink,
+                {
+                  to: "/staff/tax-calculator",
+                },
+                { default: () => "Tax Calculator" }
+              ),
+            key: "TaxCalculator",
+          },
+        ],
+      },
+      { label: "Jobs", key: "jobs" },
+      { label: "Admin", key: "admin" },
+    ];
+  }
+});
 </script>
 
 <template>
   <body>
     <div class="top-bar">
       <div class="auth-links">
-        <RouterLink v-if="userEmail !== ''" to="logout" class="auth"
+        <RouterLink v-if="userEmail !== ''" to="/staff" class="auth"
+          >Staff</RouterLink
+        >
+        <n-divider v-if="userEmail !== ''" vertical />
+        <RouterLink v-if="userEmail !== ''" to="/logout" class="auth"
           >Logout</RouterLink
         >
         <RouterLink v-else to="login" class="auth">Login</RouterLink>
@@ -109,10 +140,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  .auth-links {
+  a.auth-links {
     display: flex;
     justify-content: flex-start;
     gap: 2rem;
+  }
+  .n-divider.n-divider--vertical {
+    height: 1.5em;
+    margin-bottom: 0.5em;
   }
 
   .contact-info {
