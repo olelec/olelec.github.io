@@ -12,22 +12,6 @@
 </template>
 
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Allerta-Stencil, sans-serif;
-  background: #f8f9fa;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #333;
-}
-
 .container {
   text-align: center;
   padding: 2rem;
@@ -38,6 +22,7 @@ body {
 .error-code {
   font-size: 8rem;
   font-weight: bold;
+  font-family: "Allerta Stencil", sans-serif;
   color: var(--primary);
   margin-bottom: 1rem;
   line-height: 1;
@@ -58,6 +43,7 @@ body {
 }
 
 .message {
+  font-family: "Allerta Stencil", sans-serif;
   font-size: 1.5rem;
   margin-bottom: 2rem;
   color: #555;
