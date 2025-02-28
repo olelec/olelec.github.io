@@ -40,6 +40,9 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Copy assets for email signature
+        run: mkdir -p ./dist/assets/email; cp -r ./assets/email ./dist/assets/email
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

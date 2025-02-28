@@ -1,4 +1,67 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { ref } from "vue";
+import projectImage1 from "@/assets/Project1 (1).jpg";
+import projectImage2 from "@/assets/Project1 (2).jpg";
+import projectImage3 from "@/assets/Project1 (3).jpg";
+import projectImage4 from "@/assets/Project1 (4).jpg";
+import projectImage5 from "@/assets/Project1 (5).jpg";
+import projectImage6 from "@/assets/Project1 (6).jpg";
+import projectImage7 from "@/assets/Project1 (7).jpg";
+import projectImage8 from "@/assets/Project2 (1).jpg";
+import projectImage9 from "@/assets/Project2 (2).jpg";
+import projectImage10 from "@/assets/Project2 (3).jpg";
+import projectImage11 from "@/assets/Project2 (4).jpg";
+import projectImage12 from "@/assets/Project3 (1).jpg";
+import projectImage13 from "@/assets/Project3 (2).jpg";
+import projectImage14 from "@/assets/Project3 (3).jpg";
+import projectImage15 from "@/assets/Project3 (4).jpg";
+import projectImage16 from "@/assets/Project3 (5).jpg";
+import projectImage17 from "@/assets/Project3 (6).jpg";
+import projectImage18 from "@/assets/Project3 (7).jpg";
+import projectImage19 from "@/assets/Project3 (8).jpg";
+import projectImage20 from "@/assets/Project4 (1).jpg";
+import industrialImage1 from "@/assets/Project5 (1).jpg";
+import industrialImage2 from "@/assets/Project6 (1).jpg";
+import industrialImage3 from "@/assets/Project7 (1).jpg";
+import industrialImage4 from "@/assets/Project8 (1).jpg";
+import industrialImage5 from "@/assets/Project9 (1).jpg";
+import industrialImage6 from "@/assets/Project10 (1).jpg";
+import industrialImage7 from "@/assets/Project11 (1).jpg";
+import industrialImage8 from "@/assets/Project12 (1).jpg";
+
+const refurbishmentImages = ref([
+  projectImage1,
+  projectImage2,
+  projectImage3,
+  projectImage4,
+  projectImage5,
+  projectImage6,
+  projectImage7,
+  projectImage8,
+  projectImage9,
+  projectImage10,
+  projectImage11,
+  projectImage12,
+  projectImage13,
+  projectImage14,
+  projectImage15,
+  projectImage16,
+  projectImage17,
+  projectImage18,
+  projectImage19,
+  projectImage20,
+]);
+const industrialImages = ref([
+  industrialImage1,
+  industrialImage2,
+  industrialImage3,
+  industrialImage4,
+  industrialImage5,
+  industrialImage6,
+  industrialImage7,
+  industrialImage8,
+]);
+</script>
 
 <template>
   <section class="hero">
@@ -55,25 +118,33 @@
     <div class="section-title">
       <h2>Our Work</h2>
     </div>
+    <h3>Refurbishments</h3>
     <div class="projects-grid">
-      <img src="../assets/Project1 (1).jpg" alt="Project 1 Image 1" />
-      <img src="../assets/Project1 (2).jpg" alt="Project 1 Image 2" />
-      <img src="../assets/Project1 (3).jpg" alt="Project 1 Image 3" />
-      <img src="../assets/Project1 (4).jpg" alt="Project 1 Image 4" />
-      <img src="../assets/Project1 (5).jpg" alt="Project 1 Image 5" />
-      <img src="../assets/Project1 (6).jpg" alt="Project 1 Image 6" />
-      <img src="../assets/Project2 (1).jpg" alt="Project 2 Image 1" />
-      <img src="../assets/Project2 (2).jpg" alt="Project 2 Image 2" />
-      <img src="../assets/Project2 (3).jpg" alt="Project 2 Image 3" />
-      <img src="../assets/Project2 (4).jpg" alt="Project 2 Image 4" />
-      <img src="../assets/Project3 (1).jpg" alt="Project 3 Image 1" />
-      <img src="../assets/Project3 (2).jpg" alt="Project 3 Image 2" />
-      <img src="../assets/Project3 (3).jpg" alt="Project 3 Image 3" />
-      <img src="../assets/Project3 (4).jpg" alt="Project 3 Image 4" />
-      <img src="../assets/Project3 (5).jpg" alt="Project 3 Image 5" />
-      <img src="../assets/Project3 (6).jpg" alt="Project 3 Image 6" />
-      <img src="../assets/Project3 (7).jpg" alt="Project 3 Image 7" />
-      <img src="../assets/Project3 (8).jpg" alt="Project 3 Image 8" />
+      <n-image-group>
+        <n-space justify="center">
+          <n-image
+            v-for="url in refurbishmentImages"
+            :src="url"
+            object-fit="cover"
+            width="300"
+            height="400"
+          />
+        </n-space>
+      </n-image-group>
+    </div>
+    <h3>Industrial Work</h3>
+    <div class="projects-grid">
+      <n-image-group>
+        <n-space justify="center">
+          <n-image
+            v-for="url in industrialImages"
+            :src="url"
+            object-fit="cover"
+            width="300"
+            height="400"
+          />
+        </n-space>
+      </n-image-group>
     </div>
   </section>
 
@@ -136,7 +207,7 @@
 .hero {
   height: 80vh;
   background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
-    url("https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+    url("../assets/Background1.jpg");
   background-size: cover;
   background-position: center;
   display: flex;
@@ -172,22 +243,19 @@ section {
 }
 
 .projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: flex;
   gap: 1.5rem;
   margin-top: 2rem;
 }
 
-.projects-grid img {
-  width: 100%;
-  height: auto;
+.projects-grid .n-image {
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s;
 }
 
-.projects-grid img:hover {
-  transform: scale(1.5);
+.projects-grid .n-image:hover {
+  transform: scale(1.1);
 }
 
 .memberships {
@@ -225,7 +293,7 @@ section {
 
 .contact-info {
   background: white;
-  padding: 2rem;
+  padding: 4rem;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   text-align: center;
