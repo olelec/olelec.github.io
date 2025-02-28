@@ -1,7 +1,7 @@
 <script setup>
-import CurrencyConverter from "@/components/currencyConverter.vue";
-import vatCalculator from "@/components/vatCalculator.vue";
-import vatRemovalCalculator from "../components/vatRemovalCalculator.vue";
+import CurrencyConverter from "@/components/calculators/currencyConverter.vue";
+import vatCalculator from "@/components/calculators/vatCalculator.vue";
+import tenPercentCalculator from "../components/calculators/tenPercentCalculator.vue";
 </script>
 
 <template>
@@ -10,7 +10,7 @@ import vatRemovalCalculator from "../components/vatRemovalCalculator.vue";
       <vatCalculator />
     </n-gi>
     <n-gi>
-      <vatRemovalCalculator />
+      <tenPercentCalculator />
     </n-gi>
     <n-gi>
       <CurrencyConverter />
@@ -21,6 +21,7 @@ import vatRemovalCalculator from "../components/vatRemovalCalculator.vue";
 <style lang="scss">
 #calculation-tools {
   .calculator-helper {
+    height: 30vh;
     max-width: 400px;
     margin: auto;
     margin-top: 4em;
@@ -31,6 +32,11 @@ import vatRemovalCalculator from "../components/vatRemovalCalculator.vue";
   }
   p {
     font-weight: bold;
+  }
+  .n-input-number {
+    width: 40%;
+    justify-content: center;
+    margin: auto;
   }
 }
 </style>
