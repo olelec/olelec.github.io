@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { useAuthStore } from "@/store/authStore";
 import { computed, h, defineProps } from "vue";
 import type { MenuOption } from "naive-ui";
-import router from "@/router";
+import router from ".././router";
 
 defineProps({
   mode: {
@@ -11,10 +10,6 @@ defineProps({
     required: true,
   },
 });
-
-const authStore = useAuthStore();
-
-const userEmail = computed(() => authStore.getUserEmail);
 
 const menuOptions: MenuOption[] = computed(() => {
   if (router.currentRoute.value.path === "/") {
