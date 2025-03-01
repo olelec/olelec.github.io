@@ -20,95 +20,36 @@
           </n-button>
           <n-button
             v-else
-            @click="fetchRAMFiles"
+            @click="fetchRAMsFiles"
             type="info"
             :disabled="!isAuthenticated"
-            :loading="isLoadingRAMFiles"
+            :loading="isLoadingFiles"
           >
             Fetch Files
           </n-button>
         </n-button-group>
       </template>
     </n-data-table>
-    <n-modal v-model:show="showModal">
-      <n-card
-        style="width: 50em; min-height: 60vh"
-        title="Create New RAMS"
-        :bordered="false"
-        size="huge"
-        role="dialog"
-        aria-modal="true"
-      >
-        Date - Project Name
-        <div id="input-group">
-          <n-input-group>
-            <n-date-picker
-              v-model:value="dateForNewRAMs"
-              type="date"
-              format="dd/MM/yyyy"
-              :status="dateWarning ? 'warning' : 'default'"
-            />
-            <n-input
-              v-model:value="projectName"
-              show-count
-              placeholder="Project Name (Optional)"
-            >
-              <template #count="{ value }">
-                <span
-                  :style="{ color: value.length > 15 ? 'orange' : 'inherit' }"
-                >
-                  {{ `${value.length}/20` }}
-                </span>
-              </template>
-            </n-input>
-          </n-input-group>
-        </div>
-        <n-alert
-          v-if="dateWarning"
-          type="warning"
-          title="Warning"
-          style="margin: 0.5em"
-        >
-          The date you have selected is in the past. Please ensure this is
-          correct.
-        </n-alert>
-        <br />
-        Files Required
-        <n-checkbox-group v-model:value="newFileTypes">
-          <n-space item-style="display: flex; " style="flex-flow: column">
-            <n-checkbox
-              v-for="file in templateFiles"
-              :key="file.id"
-              :value="`${file.id}--${file.name}`"
-              :label="file.name.split('.')[0]"
-            />
-          </n-space>
-        </n-checkbox-group>
-        <br />
-        The following files will be created
-        <div v-if="tree.length === 0">
-          <br />
-        </div>
-        <n-tree
-          block-line
-          :data="tree"
-          :default-expanded-keys="defaultExpandedKeys"
-          expand-on-click
-        />
-        <template #header-extra> </template>
-        <template #footer>
-          <n-button
-            :disabled="newFileTypes.length === 0 || !dateForNewRAMs"
-            @click="createNewRAMS"
-            type="primary"
-            >Create</n-button
-          >
-        </template>
-      </n-card>
-    </n-modal>
+    <CreateRAMsModal
+      :templateFiles="templateFiles"
+      v-model:show="showModal"
+      :RAMsID="RAMsID"
+      :accessToken="accessToken"
+      @create="
+        showModal = false;
+        fetchRAMsFiles();
+      "
+    />
+    <folder-modal
+      v-model:show="showFolderModal"
+      :folderContents="folderContents"
+      :accessToken="accessToken"
+      :directoryName="directoryName"
+      @close="showFolderModal = false"
+    />
     <n-float-button-group position="fixed" bottom="30px" right="30px">
       <n-float-button
-        @click="fetchRAMFiles"
+        @click="fetchRAMsFiles"
         class="info"
         round
         width="4em"
@@ -130,459 +71,337 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { PublicClientApplication } from "@azure/msal-browser";
-import type { TreeOption } from "naive-ui";
-import { Microsoft, FileExcel, FileWord, File } from "@vicons/fa";
-import { Reload, AddCircleOutline, Folder, Cloud } from "@vicons/ionicons5";
-import { h } from "vue";
-import { NButton, NIcon } from "naive-ui";
+import CreateRAMsModal from "@/components/CreateRAMsModal.vue";
+import FolderModal from "@/components/FolderModal.vue";
+import { Microsoft } from "@vicons/fa";
+import { Reload, AddCircleOutline, Cloud, Folder } from "@vicons/ionicons5";
+import { h, ref, computed, onMounted } from "vue";
+import {
+  NButton,
+  NButtonGroup,
+  NIcon,
+  useNotification,
+  useLoadingBar,
+} from "naive-ui";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useNotification, useLoadingBar } from "naive-ui";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(relativeTime);
 
+const notification = useNotification();
+const loadingBar = useLoadingBar();
+const accessToken = ref("");
+const isLoadingFiles = ref(false);
+const RAMsID = ref("");
+const accountId = ref("");
+const accountName = ref("");
+const isAuthenticated = ref(false);
+const isLoadingLogin = ref(false);
+const showModal = ref(false);
+const showFolderModal = ref(false);
+const RAMfiles = ref([]);
+const rootFiles = ref([]);
+const templateFiles = ref([]);
+const folderContents = ref([]);
+const directoryName = ref("");
+
+const config = {
+  auth: {
+    clientId: "4963f47c-b2e5-4c6e-a419-a5c79ba5a68a",
+    authority:
+      "https://login.microsoftonline.com/07e22eb9-ae7d-4de8-8781-9f9585b2f007",
+    redirectUri: "",
+  },
+  cache: {
+    cacheLocation: "sessionStorage", // or "localStorage"
+    storeAuthStateInCookie: false,
+  },
+};
 const loginRequest = {
   scopes: ["User.Read", "Files.ReadWrite"],
 };
 
-export default {
-  data() {
-    return {
-      myMsal: null,
-      accountId: "",
-      accountName: "",
-      accessToken: "",
-      isAuthenticated: false,
-      isLoadingLogin: false,
-      isLoadingRAMFiles: false,
-      showModal: false,
-      RAMfiles: [],
-      rootFiles: [],
-      templateFiles: [],
-      newFileTypes: [],
-      projectName: "",
-      dateForNewRAMs: undefined,
-      config: {
-        auth: {
-          clientId: "4963f47c-b2e5-4c6e-a419-a5c79ba5a68a",
-          authority:
-            "https://login.microsoftonline.com/07e22eb9-ae7d-4de8-8781-9f9585b2f007",
-          redirectUri: "",
-        },
-        cache: {
-          cacheLocation: "sessionStorage", // or "localStorage"
-          storeAuthStateInCookie: false,
-        },
-      },
-    };
-  },
-  components: {
-    Microsoft,
-    Reload,
-    AddCircleOutline,
-  },
-  setup() {
-    const notification = useNotification();
-    const loadingBar = useLoadingBar();
-    return { notification, loadingBar };
-  },
-  methods: {
-    async initializeMsal() {
-      this.loadingBar.start();
-      try {
-        await this.myMsal.initialize();
-        this.loadingBar.finish();
-      } catch (error) {
-        console.error("MSAL initialization failed", error);
-        this.loadingBar.error();
-      }
-    },
-    async login() {
-      this.isLoadingLogin = true;
-      this.loadingBar.start();
-      try {
-        const loginResponse = await this.myMsal.loginPopup(loginRequest);
-        this.accountId = loginResponse.account.homeAccountId;
-        this.accountName = loginResponse.account.name;
-        this.accessToken = loginResponse.accessToken;
-        this.isAuthenticated = true;
-        this.notification.success({
-          content: "Welcome " + loginResponse.account.name,
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        this.fetchRAMFiles();
-        this.loadingBar.finish();
-      } catch (error) {
-        this.loadingBar.error();
-        console.error("Login failed:", error);
-        this.notification.error({
-          content: "Login failed. Please try again.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-      } finally {
-        this.isLoadingLogin = false;
-      }
-    },
-    unixToDate(unix) {
-      return dayjs.unix(unix / 1000).format("DD/MM/YYYY");
-    },
-    async checkAccount() {
-      const accounts = this.myMsal.getAllAccounts();
-      if (accounts.length > 0) {
-        this.accountId = accounts[0].homeAccountId;
-        this.accountName = accounts[0].name;
-        this.accessToken = accounts[0].accessToken;
-        this.isAuthenticated = true;
-      }
-    },
-    async fetchRAMFiles() {
-      this.loadingBar.start();
-      try {
-        this.isLoadingRAMFiles = true;
-        if (this.rootFiles.length === 0) await this.fetchRootFiles();
-        const RAMSID = this.rootFiles.find((item) => item.name === "RAMS").id;
+let myMsal;
 
-        const response = await fetch(
-          `https://graph.microsoft.com/v1.0/me/drive/items/${RAMSID}/children`,
-          {
-            headers: { Authorization: `Bearer ${this.accessToken}` },
-          }
-        );
-        const data = await response.json();
+onMounted(async () => {
+  config.auth.redirectUri = window.location.origin;
+  myMsal = new PublicClientApplication(config);
+  await initializeMsal();
+  checkAccount();
+});
 
-        this.RAMfiles = data.value.filter((item) => !item.name.includes("."));
-        this.isLoadingRAMFiles = false;
-        this.loadingBar.finish();
-      } catch (error) {
-        this.loadingBar.error();
-        this.notification.error({
-          content: "Error fetching files. Please try again.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        console.error("Error fetching files:", error);
-        this.isLoadingRAMFiles = false;
-      }
-    },
-    async fetchTemplateFiles() {
-      this.loadingBar.start();
-      try {
-        if (this.rootFiles.length === 0) await this.fetchRootFiles();
-
-        const templateDirID = this.rootFiles.find(
-          (item) => item.name === "Templates"
-        ).id;
-
-        const response = await fetch(
-          `https://graph.microsoft.com/v1.0/me/drive/items/${templateDirID}/children`,
-          {
-            headers: { Authorization: `Bearer ${this.accessToken}` },
-          }
-        );
-        const data = await response.json();
-
-        const filteredFiles = data.value.filter((item) => {
-          return item.name.includes(".");
-        });
-        this.templateFiles = filteredFiles;
-        this.loadingBar.finish();
-      } catch (error) {
-        this.loadingBar.error();
-        this.notification.error({
-          content: "Error fetching files. Please try again.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        console.error("Error fetching files:", error);
-      }
-    },
-    async fetchRootFiles() {
-      if (!this.isAuthenticated) {
-        console.error("User is not authenticated.");
-        return;
-      }
-      if (!this.accessToken) {
-        await this.login();
-      }
-      try {
-        const rootResponse = await fetch(
-          "https://graph.microsoft.com/v1.0/me/drive/root/children",
-          {
-            headers: { Authorization: `Bearer ${this.accessToken}` },
-          }
-        );
-        const rootFiles = await rootResponse.json();
-        this.rootFiles = rootFiles.value;
-        return rootFiles.value;
-      } catch (err) {
-        this.notification.error({
-          content: "Error fetching root files. Please try again.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        console.error("Error fetching root files:", error);
-      }
-    },
-    async openModal() {
-      this.showModal = true;
-      await this.fetchTemplateFiles(); // Fetch the template files
-    },
-    async createNewRAMS() {
-      this.loadingBar.start();
-      try {
-        const RAMSID = this.rootFiles.find((item) => item.name === "RAMS").id;
-        const newFolderResponse = await fetch(
-          "https://graph.microsoft.com/v1.0/me/drive/items/" +
-            RAMSID +
-            "/children",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${this.accessToken}`,
-            },
-            body: JSON.stringify({
-              name: dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
-              folder: {},
-              "@microsoft.graph.conflictBehavior": "rename", // Handle conflicts by renaming
-            }),
-          }
-        );
-        if (!newFolderResponse.ok) {
-          throw new Error("Error creating new folder");
-        }
-        this.notification.success({
-          content: "New folder created successfully.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        const newFolder = await newFolderResponse.json();
-        const newFolderId = newFolder.id;
-
-        // 3. Copy each template file to the new folder
-        const newFileTypes = this.newFileTypes;
-        const createFilePromises = newFileTypes.map((file) => {
-          const [fileID, fileName] = file.split("--");
-          this.copyFileToNewFolder(fileID, newFolderId, fileName);
-        });
-
-        await Promise.all([createFilePromises, await this.fetchRAMFiles()]);
-        this.showModal = false;
-        const newFileNames = newFileTypes.map((file) =>
-          this.fullFileName(file.split("--")[1])
-        );
-        this.notification.success({
-          content: `New \n${newFileNames.join("\n")}\ncreated successfully.`,
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        this.loadingBar.finish();
-      } catch (error) {
-        this.loadingBar.error();
-        console.error("Error creating new RAMS directory:", error);
-        this.notification.error({
-          content: "Error creating new RAMS directory. Please try again.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-      }
-    },
-    async copyFileToNewFolder(fileId, newFolderId, fileName) {
-      try {
-        const copyResponse = await fetch(
-          `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/copy`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${this.accessToken}`,
-            },
-            body: JSON.stringify({
-              parentReference: {
-                driveId: "me",
-                id: newFolderId,
-              },
-              name: this.fullFileName(fileName),
-            }),
-          }
-        );
-        if (!copyResponse.ok) {
-          throw new Error("Error creating new folder");
-        }
-
-        await copyResponse;
-      } catch (error) {
-        console.error("Error copying file:", error);
-        this.notification.error({
-          content: `Error creating file ${fileName}. Please try again.`,
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        throw new Error("Error copying file");
-      }
-    },
-    fullFileName(fileName) {
-      if (this.projectName === "") return fileName;
-      const splitFileName = fileName.split(".");
-      return (
-        splitFileName[0] + " - " + this.projectName + "." + splitFileName[1]
-      );
-    },
-    open(url) {
-      window.open(url, "_blank");
-    },
-    nameToDate(name) {
-      let parsableName = name;
-      let count = 0;
-      if (
-        name.length === 9 ||
-        name.length === 7 ||
-        ((name.length === 10 || name.length === 8) && name.includes(" "))
-      ) {
-        parsableName = name.slice(0, -1).trimEnd();
-        count = name.slice(-1);
-      }
-      if (parsableName.length === 8) {
-        parsableName = dayjs(parsableName, "DDMMYYYY").format("DD/MMM/YYYY");
-      } else if (parsableName.length === 6) {
-        parsableName = dayjs(parsableName, "DDMMYY").format("DD/MMM/YYYY");
-      }
-      return `${parsableName} ${count ? `(Ver. ${count})` : ""}`;
-    },
-  },
-  computed: {
-    data() {
-      return this.RAMfiles.map((file) => ({
-        name: file.name,
-        friendlyName: this.nameToDate(file.name),
-        lastModifiedDateTime: `${dayjs(file.lastModifiedDateTime).fromNow()} `,
-        webUrl: file.webUrl,
-      }));
-    },
-    currentTime() {
-      return dayjs().unix();
-    },
-    dateWarning() {
-      return dayjs(this.dateForNewRAMs).isBefore(dayjs().subtract(1, "day"));
-    },
-    columns() {
-      return [
-        {
-          title: "Directory Name",
-          key: "name",
-          sorter: (a, b) => a.name.localeCompare(b.name),
-        },
-        {
-          title: "Friendly Name",
-          key: "friendlyName",
-          sorter: (a, b) =>
-            dayjs(b.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf() -
-            dayjs(a.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf(),
-          defaultSortOrder: "ascend",
-        },
-        {
-          title: "Last Modified",
-          key: "lastModifiedDateTime",
-          sorter: (a, b) =>
-            dayjs(b.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf() -
-            dayjs(a.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf(),
-        },
-        {
-          title: "Action",
-          key: "actions",
-          render(row) {
-            return [
-              h(
-                NButton,
-                {
-                  strong: true,
-                  tertiary: true,
-                  size: "small",
-                  round: true,
-                  type: "info",
-                  onClick: () => open(row.webUrl),
-                },
-                { default: () => "Open in OneDrive" }
-              ),
-            ];
-          },
-        },
-      ];
-    },
-    tree(): TreeOption[] {
-      const date = dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY");
-      if (this.newFileTypes.length === 0 || date === "Invalid Date") return [];
-      return [
-        {
-          label: "OneDrive",
-          key: "oneDrive",
-          prefix: () =>
-            h(NIcon, null, {
-              default: () => h(Cloud),
-            }),
-          children: [
-            {
-              label: "RAMS",
-              key: "RAMS",
-              prefix: () =>
-                h(NIcon, null, {
-                  default: () => h(Folder),
-                }),
-              children: [
-                {
-                  label: date,
-                  key: date,
-                  prefix: () =>
-                    h(NIcon, null, {
-                      default: () => h(Folder),
-                    }),
-                  children: this.newFileTypes.map((file) => ({
-                    label: this.fullFileName(file.split("--")[1]),
-                    key: file.split("--")[1],
-                    prefix: () =>
-                      h(NIcon, null, {
-                        default: () =>
-                          h(
-                            this.fullFileName(file.split("--")[1]).includes(
-                              ".xl"
-                            )
-                              ? FileExcel
-                              : this.fullFileName(file.split("--")[1]).includes(
-                                  ".do"
-                                )
-                              ? FileWord
-                              : File
-                          ),
-                      }),
-                  })),
-                },
-              ],
-            },
-          ],
-        },
-      ];
-    },
-    defaultExpandedKeys() {
-      return [
-        "oneDrive",
-        "RAMS",
-        dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
-      ];
-    },
-  },
-  async created() {
-    this.config.auth.redirectUri = window.location.origin;
-    this.myMsal = new PublicClientApplication(this.config);
-    await this.initializeMsal();
-    this.checkAccount();
-  },
+const openFolder = async (folderID, folderName) => {
+  loadingBar.start();
+  try {
+    const files = await fetchFiles(folderID);
+    directoryName.value = folderName;
+    folderContents.value = files;
+    showFolderModal.value = true;
+    loadingBar.finish();
+  } catch (error) {
+    loadingBar.error();
+    console.error("Error opening folder:", error);
+    notification.error({
+      content: "Error opening folder. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+  }
 };
+const fetchFiles = async (fileID) => {
+  loadingBar.start();
+  try {
+    isLoadingFiles.value = true;
+
+    const response = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/children`,
+      {
+        headers: { Authorization: `Bearer ${accessToken.value}` },
+      }
+    );
+    const data = await response.json();
+
+    isLoadingFiles.value = false;
+    loadingBar.finish();
+    return data.value;
+  } catch (error) {
+    loadingBar.error();
+    notification.error({
+      content: "Error fetching files. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+    console.error("Error fetching files:", error);
+    isLoadingFiles.value = false;
+  }
+};
+
+const initializeMsal = async () => {
+  loadingBar.start();
+  try {
+    await myMsal.initialize();
+    loadingBar.finish();
+  } catch (error) {
+    console.error("MSAL initialization failed", error);
+    loadingBar.error();
+  }
+};
+const login = async () => {
+  isLoadingLogin.value = true;
+  loadingBar.start();
+  try {
+    const loginResponse = await myMsal.loginPopup(loginRequest);
+    accountId.value = loginResponse.account.homeAccountId;
+    accountName.value = loginResponse.account.name;
+    accessToken.value = loginResponse.accessToken;
+    isAuthenticated.value = true;
+    notification.success({
+      content: "Welcome " + loginResponse.account.name,
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+    fetchRAMsFiles();
+    loadingBar.finish();
+  } catch (error) {
+    loadingBar.error();
+    console.error("Login failed:", error);
+    notification.error({
+      content: "Login failed. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+  } finally {
+    isLoadingLogin.value = false;
+  }
+};
+const checkAccount = async () => {
+  const accounts = myMsal.getAllAccounts();
+  if (accounts.length > 0) {
+    accountId.value = accounts[0].homeAccountId;
+    accountName.value = accounts[0].name;
+    accessToken.value = accounts[0].accessToken;
+    isAuthenticated.value = true;
+  }
+};
+
+const fetchTemplateFiles = async () => {
+  loadingBar.start();
+  try {
+    if (rootFiles.value.length === 0) await fetchRootFiles();
+
+    const templateDir = rootFiles.value.find(
+      (item) => item.name === "Templates"
+    );
+    if (!templateDir) {
+      throw new Error("Templates directory not found");
+    }
+    const templateDirID = templateDir.id;
+
+    const response = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${templateDirID}/children`,
+      {
+        headers: { Authorization: `Bearer ${accessToken.value}` },
+      }
+    );
+    const data = await response.json();
+
+    const filteredFiles = data.value.filter((item) => {
+      return item.name.includes(".");
+    });
+    templateFiles.value = filteredFiles;
+    loadingBar.finish();
+  } catch (error) {
+    loadingBar.error();
+    notification.error({
+      content: "Error fetching files. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+    console.error("Error fetching files:", error);
+  }
+};
+const fetchRootFiles = async () => {
+  if (!isAuthenticated.value) {
+    console.error("User is not authenticated.");
+    return;
+  }
+  if (!accessToken.value) {
+    await login();
+  }
+  try {
+    const rootResponse = await fetch(
+      "https://graph.microsoft.com/v1.0/me/drive/root/children",
+      {
+        headers: { Authorization: `Bearer ${accessToken.value}` },
+      }
+    );
+    const rootFilesData = await rootResponse.json();
+    RAMsID.value = rootFilesData.value.find((item) => item.name === "RAMS").id;
+    rootFiles.value = rootFilesData.value;
+    return rootFiles.value;
+  } catch (err) {
+    notification.error({
+      content: "Error fetching root files. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+    console.error("Error fetching root files:", err);
+  }
+};
+const openModal = async () => {
+  showModal.value = true;
+  await fetchTemplateFiles(); // Fetch the template files
+};
+const fetchRAMsFiles = async () => {
+  if (rootFiles.value.length === 0) await fetchRootFiles();
+  const allFiles = await fetchFiles(RAMsID.value);
+  RAMfiles.value = allFiles.filter((item) => !item.name.includes("."));
+};
+const open = (url) => {
+  window.open(url, "_blank");
+};
+const nameToDate = (name) => {
+  let parsableName = name;
+  let count = 0;
+  if (
+    name.length === 9 ||
+    name.length === 7 ||
+    ((name.length === 10 || name.length === 8) && name.includes(" "))
+  ) {
+    parsableName = name.slice(0, -1).trimEnd();
+    count = name.slice(-1);
+  }
+  if (parsableName.length === 8) {
+    parsableName = dayjs(parsableName, "DDMMYYYY").format("DD/MMM/YYYY");
+  } else if (parsableName.length === 6) {
+    parsableName = dayjs(parsableName, "DDMMYY").format("DD/MMM/YYYY");
+  }
+  return `${parsableName} ${count ? `(Ver. ${count})` : ""}`;
+};
+
+const data = computed(() => {
+  return RAMfiles.value.map((file) => ({
+    name: file.name,
+    friendlyName: nameToDate(file.name),
+    lastModifiedDateTime: `${dayjs(file.lastModifiedDateTime).fromNow()} `,
+    webUrl: file.webUrl,
+    id: file.id,
+  }));
+});
+
+const columns = computed(() => {
+  return [
+    {
+      title: "Directory Name",
+      key: "name",
+      sorter: (a, b) => a.name.localeCompare(b.name),
+    },
+    {
+      title: "Friendly Name",
+      key: "friendlyName",
+      sorter: (a, b) =>
+        dayjs(b.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf() -
+        dayjs(a.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf(),
+      defaultSortOrder: "ascend",
+    },
+    {
+      title: "Last Modified",
+      key: "lastModifiedDateTime",
+      sorter: (a, b) =>
+        dayjs(b.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf() -
+        dayjs(a.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf(),
+    },
+    {
+      title: "Action",
+      key: "actions",
+      render(row) {
+        return [
+          h(NButtonGroup, [
+            h(
+              NButton,
+              {
+                strong: true,
+                tertiary: true,
+                size: "small",
+                round: true,
+                type: "info",
+                secondary: true,
+                onClick: () => openFolder(row.id, row.name),
+              },
+              {
+                default: () => [
+                  h(NIcon, null, { default: () => h(Folder) }),
+                  h("span", { style: { marginLeft: "0.25em" } }, "Open"), // Adding a small gap
+                ],
+              }
+            ),
+            h(
+              NButton,
+              {
+                strong: true,
+                tertiary: true,
+                size: "small",
+                round: true,
+                type: "info", // Pick either 'info' or 'secondary' depending on your design preference
+                onClick: () => open(row.webUrl),
+              },
+              {
+                default: () => [
+                  h(NIcon, null, { default: () => h(Cloud) }),
+                  h("span", { style: { marginLeft: "0.25em" } }, "OneDrive"), // Adding a small gap
+                ],
+              }
+            ),
+          ]),
+        ];
+      },
+    },
+  ];
+});
 </script>
 
 <style scoped>
