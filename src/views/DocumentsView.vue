@@ -32,7 +32,7 @@
     </n-data-table>
     <n-modal v-model:show="showModal">
       <n-card
-        style="width: 600px"
+        style="width: 50em; min-height: 60vh"
         title="Create New RAMS"
         :bordered="false"
         size="huge"
@@ -86,6 +86,9 @@
         </n-checkbox-group>
         <br />
         The following files will be created
+        <div v-if="tree.length === 0">
+          <br />
+        </div>
         <n-tree
           block-line
           :data="tree"
@@ -131,7 +134,7 @@
 import { PublicClientApplication } from "@azure/msal-browser";
 import type { TreeOption } from "naive-ui";
 import { Microsoft, FileExcel, FileWord, File } from "@vicons/fa";
-import { Reload, AddCircleOutline, Folder } from "@vicons/ionicons5";
+import { Reload, AddCircleOutline, Folder, Cloud } from "@vicons/ionicons5";
 import { h } from "vue";
 import { NButton, NIcon } from "naive-ui";
 import dayjs from "dayjs";
@@ -517,37 +520,49 @@ export default {
       if (this.newFileTypes.length === 0 || date === "Invalid Date") return [];
       return [
         {
-          label: "RAMS",
-          key: "RAMS",
+          label: "OneDrive",
+          key: "oneDrive",
           prefix: () =>
             h(NIcon, null, {
-              default: () => h(Folder),
+              default: () => h(Cloud),
             }),
           children: [
             {
-              label: date,
-              key: date,
+              label: "RAMS",
+              key: "RAMS",
               prefix: () =>
                 h(NIcon, null, {
                   default: () => h(Folder),
                 }),
-              children: this.newFileTypes.map((file) => ({
-                label: this.fullFileName(file.split("--")[1]),
-                key: file.split("--")[1],
-                prefix: () =>
-                  h(NIcon, null, {
-                    default: () =>
-                      h(
-                        this.fullFileName(file.split("--")[1]).includes(".xl")
-                          ? FileExcel
-                          : this.fullFileName(file.split("--")[1]).includes(
-                              ".do"
+              children: [
+                {
+                  label: date,
+                  key: date,
+                  prefix: () =>
+                    h(NIcon, null, {
+                      default: () => h(Folder),
+                    }),
+                  children: this.newFileTypes.map((file) => ({
+                    label: this.fullFileName(file.split("--")[1]),
+                    key: file.split("--")[1],
+                    prefix: () =>
+                      h(NIcon, null, {
+                        default: () =>
+                          h(
+                            this.fullFileName(file.split("--")[1]).includes(
+                              ".xl"
                             )
-                          ? FileWord
-                          : File
-                      ),
-                  }),
-              })),
+                              ? FileExcel
+                              : this.fullFileName(file.split("--")[1]).includes(
+                                  ".do"
+                                )
+                              ? FileWord
+                              : File
+                          ),
+                      }),
+                  })),
+                },
+              ],
             },
           ],
         },
@@ -555,6 +570,7 @@ export default {
     },
     defaultExpandedKeys() {
       return [
+        "oneDrive",
         "RAMS",
         dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
       ];
