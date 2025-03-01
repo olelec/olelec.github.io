@@ -70,11 +70,16 @@ import CreateRAMsModal from "@/components/CreateRAMsModal.vue";
 import { Microsoft } from "@vicons/fa";
 import { Reload, AddCircleOutline } from "@vicons/ionicons5";
 import { h, ref, computed, onMounted } from "vue";
-import { NButton, NButtonGroup, NIcon } from "naive-ui";
+import {
+  NButton,
+  NButtonGroup,
+  NIcon,
+  useNotification,
+  useLoadingBar,
+} from "naive-ui";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useNotification, useLoadingBar } from "naive-ui";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(relativeTime);
