@@ -32,7 +32,7 @@
     </n-data-table>
     <n-modal v-model:show="showModal">
       <n-card
-        style="width: 600px"
+        style="width: 50em; min-height: 60vh"
         title="Create New RAMS"
         :bordered="false"
         size="huge"
@@ -51,7 +51,7 @@
             <n-input
               v-model:value="projectName"
               show-count
-              placeholder="Project Name"
+              placeholder="Project Name (Optional)"
             >
               <template #count="{ value }">
                 <span
@@ -86,6 +86,9 @@
         </n-checkbox-group>
         <br />
         The following files will be created
+        <div v-if="tree.length === 0">
+          <br />
+        </div>
         <n-tree
           block-line
           :data="tree"
@@ -130,10 +133,10 @@
 <script lang="ts">
 import { PublicClientApplication } from "@azure/msal-browser";
 import type { TreeOption } from "naive-ui";
-import { Microsoft } from "@vicons/fa";
-import { Reload, AddCircleOutline } from "@vicons/ionicons5";
+import { Microsoft, FileExcel, FileWord, File } from "@vicons/fa";
+import { Reload, AddCircleOutline, Folder, Cloud } from "@vicons/ionicons5";
 import { h } from "vue";
-import { NButton } from "naive-ui";
+import { NButton, NIcon } from "naive-ui";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -513,20 +516,53 @@ export default {
       ];
     },
     tree(): TreeOption[] {
-      // make a tree with top "RAMS" then  dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY") then all newFileTypes
-      // if (this.newFileTypes.length === 0 || !this.dateForNewRAMs) return [];
+      const date = dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY");
+      if (this.newFileTypes.length === 0 || date === "Invalid Date") return [];
       return [
         {
-          label: "RAMS",
-          key: "RAMS",
+          label: "OneDrive",
+          key: "oneDrive",
+          prefix: () =>
+            h(NIcon, null, {
+              default: () => h(Cloud),
+            }),
           children: [
             {
-              label: dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
-              key: dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
-              children: this.newFileTypes.map((file) => ({
-                label: this.fullFileName(file.split("--")[1]),
-                key: file.split("--")[1],
-              })),
+              label: "RAMS",
+              key: "RAMS",
+              prefix: () =>
+                h(NIcon, null, {
+                  default: () => h(Folder),
+                }),
+              children: [
+                {
+                  label: date,
+                  key: date,
+                  prefix: () =>
+                    h(NIcon, null, {
+                      default: () => h(Folder),
+                    }),
+                  children: this.newFileTypes.map((file) => ({
+                    label: this.fullFileName(file.split("--")[1]),
+                    key: file.split("--")[1],
+                    prefix: () =>
+                      h(NIcon, null, {
+                        default: () =>
+                          h(
+                            this.fullFileName(file.split("--")[1]).includes(
+                              ".xl"
+                            )
+                              ? FileExcel
+                              : this.fullFileName(file.split("--")[1]).includes(
+                                  ".do"
+                                )
+                              ? FileWord
+                              : File
+                          ),
+                      }),
+                  })),
+                },
+              ],
             },
           ],
         },
@@ -534,6 +570,7 @@ export default {
     },
     defaultExpandedKeys() {
       return [
+        "oneDrive",
         "RAMS",
         dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
       ];
