@@ -78,8 +78,18 @@ const menuOptions: MenuOption[] = computed(() => {
           },
         ],
       },
-      { label: "Jobs", key: "jobs" },
-      { label: "Admin", key: "admin" },
+
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: "/staff/documents",
+            },
+            { default: () => "Documents" }
+          ),
+        key: "Documents",
+      },
     ];
   }
 });

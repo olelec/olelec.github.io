@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useNotification } from "naive-ui";
+import { useNotification, useLoadingBar } from "naive-ui";
 import { onMounted, ref } from "vue";
 
 const notification = useNotification();
+const loadingBar = useLoadingBar();
 dayjs.extend(relativeTime);
 
 const amount = ref(1);
@@ -17,6 +18,7 @@ const timestamp = ref("Fetching...");
 const errorGettingData = ref(false);
 
 async function fetchExchangeRates() {
+  loadingBar.start();
   try {
     const responseRaw = await fetch(
       "https://api.exchangerate-api.com/v4/latest/USD"
@@ -33,7 +35,9 @@ async function fetchExchangeRates() {
       .map((currency) => ({ value: currency, label: currency }));
 
     errorGettingData.value = false;
+    loadingBar.finish();
   } catch (error) {
+    loadingBar.error();
     console.error("Error fetching exchange rates:", error);
     notification.error({
       content: "Error fetching exchange rates",

@@ -53,13 +53,14 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { useNotification } from "naive-ui";
+import { useNotification, useLoadingBar } from "naive-ui";
 
 const router = useRouter();
 const email = ref("");
 const password = ref("");
 const showModal = ref(false);
 const notification = useNotification();
+const loadingBar = useLoadingBar();
 
 const login = () => {
   if (email.value === "" || password.value === "") {
@@ -70,6 +71,7 @@ const login = () => {
     });
     return;
   }
+  loadingBar.start();
   const auth = getAuth();
   signInWithEmailAndPassword(auth, email.value, password.value)
     .then((userCredential) => {
@@ -80,6 +82,7 @@ const login = () => {
         duration: 2500,
         keepAliveOnHover: true,
       });
+      loadingBar.finish();
       router.push("/staff");
     })
     .catch((error) => {
@@ -88,6 +91,8 @@ const login = () => {
         duration: 5000,
         keepAliveOnHover: true,
       });
+      loadingBar.error();
+      console.error(error);
     });
 };
 
