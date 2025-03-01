@@ -3,6 +3,7 @@ import { RouterView, RouterLink } from "vue-router";
 import { useAuthStore } from "./store/authStore";
 import { computed } from "vue";
 import navigation from "@/components/navigation.vue";
+import { darkTheme, useOsTheme } from "naive-ui";
 
 const authStore = useAuthStore();
 
@@ -10,35 +11,38 @@ const userEmail = computed(() => authStore.getUserEmail);
 </script>
 
 <template>
-  <body>
-    <div class="top-bar">
-      <div class="auth-links">
-        <RouterLink v-if="userEmail !== ''" to="/staff" class="auth"
-          >Staff</RouterLink
-        >
-        <n-divider v-if="userEmail !== ''" vertical />
-        <RouterLink v-if="userEmail !== ''" to="/logout" class="auth"
-          >Logout</RouterLink
-        >
-        <RouterLink v-else to="login" class="auth">Login</RouterLink>
+  <n-config-provider>
+    <body>
+      <div class="top-bar">
+        <div class="auth-links">
+          <RouterLink v-if="userEmail !== ''" to="/staff" class="auth"
+            >Staff</RouterLink
+          >
+          <n-divider v-if="userEmail !== ''" vertical />
+          <RouterLink v-if="userEmail !== ''" to="/logout" class="auth"
+            >Logout</RouterLink
+          >
+          <RouterLink v-else to="login" class="auth">Login</RouterLink>
+        </div>
+
+        <div class="contact-info">
+          <a href="tel:0878126549">📱 087 812 6549</a>
+          <a href="mailto:patricia@terrabuild.ie">✉️ patricia@terrabuild.ie</a>
+        </div>
       </div>
 
-      <div class="contact-info">
-        <a href="tel:0878126549">📱 087 812 6549</a>
-        <a href="mailto:patricia@terrabuild.ie">✉️ patricia@terrabuild.ie</a>
-      </div>
-    </div>
-
-    <nav>
-      <RouterLink to="/" class="logo">TerraBuild</RouterLink>
-      <div class="nav-links">
-        <navigation mode="horizontal" />
-      </div>
-    </nav>
-    <n-notification-provider>
-      <RouterView />
-    </n-notification-provider>
-  </body>
+      <nav>
+        <RouterLink to="/" class="logo">TerraBuild</RouterLink>
+        <div class="nav-links">
+          <navigation mode="horizontal" />
+        </div>
+      </nav>
+      <n-loading-bar-provider>
+        <n-notification-provider>
+          <RouterView />
+        </n-notification-provider>
+      </n-loading-bar-provider></body
+  ></n-config-provider>
 </template>
 
 <style lang="scss">
