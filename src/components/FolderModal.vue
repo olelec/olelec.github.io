@@ -72,7 +72,7 @@ const checkedKeys = ref<string[]>([]);
 const emit = defineEmits(["close"]);
 
 const updateCheckedKeys = (keys: Array<string>) => {
-  checkedKeys.value = keys;
+  checkedKeys.value = keys.filter((key) => key !== props.directoryName);
 };
 const downloadPDFs = async () => {
   loadingBar.start();
