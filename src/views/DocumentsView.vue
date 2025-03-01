@@ -39,13 +39,30 @@
         role="dialog"
         aria-modal="true"
       >
-        Date
-        <n-date-picker
-          v-model:value="dateForNewRAMs"
-          type="date"
-          format="dd/MM/yyyy"
-          :status="dateWarning ? 'warning' : 'default'"
-        />
+        Date - Project Name
+        <div id="input-group">
+          <n-input-group>
+            <n-date-picker
+              v-model:value="dateForNewRAMs"
+              type="date"
+              format="dd/MM/yyyy"
+              :status="dateWarning ? 'warning' : 'default'"
+            />
+            <n-input
+              v-model:value="projectName"
+              show-count
+              placeholder="Project Name"
+            >
+              <template #count="{ value }">
+                <span
+                  :style="{ color: value.length > 15 ? 'orange' : 'inherit' }"
+                >
+                  {{ `${value.length}/20` }}
+                </span>
+              </template>
+            </n-input>
+          </n-input-group>
+        </div>
         <n-alert
           v-if="dateWarning"
           type="warning"
@@ -55,6 +72,7 @@
           The date you have selected is in the past. Please ensure this is
           correct.
         </n-alert>
+        <br />
         Files Required
         <n-checkbox-group v-model:value="newFileTypes">
           <n-space item-style="display: flex; " style="flex-flow: column">
@@ -66,11 +84,20 @@
             />
           </n-space>
         </n-checkbox-group>
+        <br />
+        The following files will be created
+        <n-tree
+          block-line
+          :data="tree"
+          :default-expanded-keys="defaultExpandedKeys"
+          expand-on-click
+        />
         <template #header-extra> </template>
         <template #footer>
           <n-button
             :disabled="newFileTypes.length === 0 || !dateForNewRAMs"
             @click="createNewRAMS"
+            type="primary"
             >Create</n-button
           >
         </template>
@@ -100,8 +127,9 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { PublicClientApplication } from "@azure/msal-browser";
+import type { TreeOption } from "naive-ui";
 import { Microsoft } from "@vicons/fa";
 import { Reload, AddCircleOutline } from "@vicons/ionicons5";
 import { h } from "vue";
@@ -133,6 +161,7 @@ export default {
       rootFiles: [],
       templateFiles: [],
       newFileTypes: [],
+      projectName: "",
       dateForNewRAMs: undefined,
       config: {
         auth: {
@@ -342,7 +371,9 @@ export default {
 
         await Promise.all([createFilePromises, await this.fetchRAMFiles()]);
         this.showModal = false;
-        const newFileNames = newFileTypes.map((file) => file.split("--")[1]);
+        const newFileNames = newFileTypes.map((file) =>
+          this.fullFileName(file.split("--")[1])
+        );
         this.notification.success({
           content: `New \n${newFileNames.join("\n")}\ncreated successfully.`,
           duration: 2500,
@@ -374,7 +405,7 @@ export default {
                 driveId: "me",
                 id: newFolderId,
               },
-              name: fileName,
+              name: this.fullFileName(fileName),
             }),
           }
         );
@@ -392,6 +423,13 @@ export default {
         });
         throw new Error("Error copying file");
       }
+    },
+    fullFileName(fileName) {
+      if (this.projectName === "") return fileName;
+      const splitFileName = fileName.split(".");
+      return (
+        splitFileName[0] + " - " + this.projectName + "." + splitFileName[1]
+      );
     },
     open(url) {
       window.open(url, "_blank");
@@ -474,6 +512,32 @@ export default {
         },
       ];
     },
+    tree(): TreeOption[] {
+      // make a tree with top "RAMS" then  dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY") then all newFileTypes
+      // if (this.newFileTypes.length === 0 || !this.dateForNewRAMs) return [];
+      return [
+        {
+          label: "RAMS",
+          key: "RAMS",
+          children: [
+            {
+              label: dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
+              key: dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
+              children: this.newFileTypes.map((file) => ({
+                label: this.fullFileName(file.split("--")[1]),
+                key: file.split("--")[1],
+              })),
+            },
+          ],
+        },
+      ];
+    },
+    defaultExpandedKeys() {
+      return [
+        "RAMS",
+        dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
+      ];
+    },
   },
   async created() {
     this.config.auth.redirectUri = window.location.origin;
@@ -492,5 +556,16 @@ export default {
 .n-float-button.info {
   background-color: #1890ff;
   color: white;
+}
+#input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  .n-input {
+    width: 100%;
+  }
+  .n-date-picker {
+    width: 36%;
+  }
 }
 </style>
