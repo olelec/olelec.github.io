@@ -40,6 +40,13 @@
         fetchRAMsFiles();
       "
     />
+    <folder-modal
+      v-model:show="showFolderModal"
+      :folderContents="folderContents"
+      :accessToken="accessToken"
+      :directoryName="directoryName"
+      @close="showFolderModal = false"
+    />
     <n-float-button-group position="fixed" bottom="30px" right="30px">
       <n-float-button
         @click="fetchRAMsFiles"
@@ -67,8 +74,9 @@
 <script setup lang="ts">
 import { PublicClientApplication } from "@azure/msal-browser";
 import CreateRAMsModal from "@/components/CreateRAMsModal.vue";
+import FolderModal from "@/components/FolderModal.vue";
 import { Microsoft } from "@vicons/fa";
-import { Reload, AddCircleOutline } from "@vicons/ionicons5";
+import { Reload, AddCircleOutline, Cloud, Folder } from "@vicons/ionicons5";
 import { h, ref, computed, onMounted } from "vue";
 import {
   NButton,
@@ -94,9 +102,12 @@ const accountName = ref("");
 const isAuthenticated = ref(false);
 const isLoadingLogin = ref(false);
 const showModal = ref(false);
+const showFolderModal = ref(false);
 const RAMfiles = ref([]);
 const rootFiles = ref([]);
 const templateFiles = ref([]);
+const folderContents = ref([]);
+const directoryName = ref("");
 
 const config = {
   auth: {
@@ -123,50 +134,19 @@ onMounted(async () => {
   checkAccount();
 });
 
-const downloadPDFs = async (directoryID) => {
+const openFolder = async (folderID, folderName) => {
   loadingBar.start();
   try {
-    const files = await fetchFiles(directoryID);
-    const pdfFiles = files.filter(
-      (file) => file.name.includes(".docx") || file.name.includes(".xlsx")
-    );
-    console.log(pdfFiles);
-    pdfFiles.forEach((file) => {});
-  } catch (error) {
-    loadingBar.error();
-    console.error("Error downloading PDF:", error);
-    notification.error({
-      content: "Error downloading PDF. Please try again.",
-      duration: 2500,
-      keepAliveOnHover: true,
-    });
-  }
-};
-const downloadPDF = async (fileID: string) => {
-  loadingBar.start();
-  try {
-    const response = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/content?format=pdf`,
-      {
-        headers: { Authorization: `Bearer ${accessToken.value}` },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Error downloading PDF file");
-    }
-
+    const files = await fetchFiles(folderID);
+    directoryName.value = folderName;
+    folderContents.value = files;
+    showFolderModal.value = true;
     loadingBar.finish();
-    notification.success({
-      content: "PDF downloaded successfully.",
-      duration: 2500,
-      keepAliveOnHover: true,
-    });
   } catch (error) {
     loadingBar.error();
-    console.error("Error downloading PDF:", error);
+    console.error("Error opening folder:", error);
     notification.error({
-      content: "Error downloading PDF. Please try again.",
+      content: "Error opening folder. Please try again.",
       duration: 2500,
       keepAliveOnHover: true,
     });
@@ -187,7 +167,7 @@ const fetchFiles = async (fileID) => {
 
     isLoadingFiles.value = false;
     loadingBar.finish();
-    return data.value.filter((item) => !item.name.includes("."));
+    return data.value;
   } catch (error) {
     loadingBar.error();
     notification.error({
@@ -318,7 +298,8 @@ const openModal = async () => {
 };
 const fetchRAMsFiles = async () => {
   if (rootFiles.value.length === 0) await fetchRootFiles();
-  RAMfiles.value = await fetchFiles(RAMsID.value);
+  const allFiles = await fetchFiles(RAMsID.value);
+  RAMfiles.value = allFiles.filter((item) => !item.name.includes("."));
 };
 const open = (url) => {
   window.open(url, "_blank");
@@ -389,9 +370,14 @@ const columns = computed(() => {
                 round: true,
                 type: "info",
                 secondary: true,
-                onClick: () => open(row.webUrl),
+                onClick: () => openFolder(row.id, row.name),
               },
-              { default: () => "Open in OneDrive" }
+              {
+                default: () => [
+                  h(NIcon, null, { default: () => h(Folder) }),
+                  h("span", { style: { marginLeft: "0.25em" } }, "Open"), // Adding a small gap
+                ],
+              }
             ),
             h(
               NButton,
@@ -400,11 +386,15 @@ const columns = computed(() => {
                 tertiary: true,
                 size: "small",
                 round: true,
-                type: "error",
-                secondary: true,
-                onClick: () => downloadPDFs(row.id),
+                type: "info", // Pick either 'info' or 'secondary' depending on your design preference
+                onClick: () => open(row.webUrl),
               },
-              { default: () => "Download PDF" }
+              {
+                default: () => [
+                  h(NIcon, null, { default: () => h(Cloud) }),
+                  h("span", { style: { marginLeft: "0.25em" } }, "OneDrive"), // Adding a small gap
+                ],
+              }
             ),
           ]),
         ];
