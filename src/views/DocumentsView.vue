@@ -20,95 +20,24 @@
           </n-button>
           <n-button
             v-else
-            @click="fetchRAMFiles"
+            @click="fetchRAMsFiles"
             type="info"
             :disabled="!isAuthenticated"
-            :loading="isLoadingRAMFiles"
+            :loading="isLoadingFiles"
           >
             Fetch Files
           </n-button>
         </n-button-group>
       </template>
     </n-data-table>
-    <n-modal v-model:show="showModal">
-      <n-card
-        style="width: 50em; min-height: 60vh"
-        title="Create New RAMS"
-        :bordered="false"
-        size="huge"
-        role="dialog"
-        aria-modal="true"
-      >
-        Date - Project Name
-        <div id="input-group">
-          <n-input-group>
-            <n-date-picker
-              v-model:value="dateForNewRAMs"
-              type="date"
-              format="dd/MM/yyyy"
-              :status="dateWarning ? 'warning' : 'default'"
-            />
-            <n-input
-              v-model:value="projectName"
-              show-count
-              placeholder="Project Name (Optional)"
-            >
-              <template #count="{ value }">
-                <span
-                  :style="{ color: value.length > 15 ? 'orange' : 'inherit' }"
-                >
-                  {{ `${value.length}/20` }}
-                </span>
-              </template>
-            </n-input>
-          </n-input-group>
-        </div>
-        <n-alert
-          v-if="dateWarning"
-          type="warning"
-          title="Warning"
-          style="margin: 0.5em"
-        >
-          The date you have selected is in the past. Please ensure this is
-          correct.
-        </n-alert>
-        <br />
-        Files Required
-        <n-checkbox-group v-model:value="newFileTypes">
-          <n-space item-style="display: flex; " style="flex-flow: column">
-            <n-checkbox
-              v-for="file in templateFiles"
-              :key="file.id"
-              :value="`${file.id}--${file.name}`"
-              :label="file.name.split('.')[0]"
-            />
-          </n-space>
-        </n-checkbox-group>
-        <br />
-        The following files will be created
-        <div v-if="tree.length === 0">
-          <br />
-        </div>
-        <n-tree
-          block-line
-          :data="tree"
-          :default-expanded-keys="defaultExpandedKeys"
-          expand-on-click
-        />
-        <template #header-extra> </template>
-        <template #footer>
-          <n-button
-            :disabled="newFileTypes.length === 0 || !dateForNewRAMs"
-            @click="createNewRAMS"
-            type="primary"
-            >Create</n-button
-          >
-        </template>
-      </n-card>
-    </n-modal>
+    <CreateRAMsModal
+      :templateFiles="templateFiles"
+      v-model:show="showModal"
+      @create="createNewRAMS"
+    />
     <n-float-button-group position="fixed" bottom="30px" right="30px">
       <n-float-button
-        @click="fetchRAMFiles"
+        @click="fetchRAMsFiles"
         class="info"
         round
         width="4em"
@@ -132,11 +61,11 @@
 
 <script lang="ts">
 import { PublicClientApplication } from "@azure/msal-browser";
-import type { TreeOption } from "naive-ui";
-import { Microsoft, FileExcel, FileWord, File } from "@vicons/fa";
-import { Reload, AddCircleOutline, Folder, Cloud } from "@vicons/ionicons5";
+import CreateRAMsModal from "@/components/CreateRAMsModal.vue";
+import { Microsoft } from "@vicons/fa";
+import { Reload, AddCircleOutline } from "@vicons/ionicons5";
 import { h } from "vue";
-import { NButton, NIcon } from "naive-ui";
+import { dateArDZ, NButton, NButtonGroup, NIcon } from "naive-ui";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -158,7 +87,7 @@ export default {
       accessToken: "",
       isAuthenticated: false,
       isLoadingLogin: false,
-      isLoadingRAMFiles: false,
+      isLoadingFiles: false,
       showModal: false,
       RAMfiles: [],
       rootFiles: [],
@@ -184,6 +113,7 @@ export default {
     Microsoft,
     Reload,
     AddCircleOutline,
+    CreateRAMsModal,
   },
   setup() {
     const notification = useNotification();
@@ -215,7 +145,7 @@ export default {
           duration: 2500,
           keepAliveOnHover: true,
         });
-        this.fetchRAMFiles();
+        this.fetchRAMsFiles();
         this.loadingBar.finish();
       } catch (error) {
         this.loadingBar.error();
@@ -241,24 +171,22 @@ export default {
         this.isAuthenticated = true;
       }
     },
-    async fetchRAMFiles() {
+    async fetchFiles(fileID) {
       this.loadingBar.start();
       try {
-        this.isLoadingRAMFiles = true;
-        if (this.rootFiles.length === 0) await this.fetchRootFiles();
-        const RAMSID = this.rootFiles.find((item) => item.name === "RAMS").id;
+        this.isLoadingFiles = true;
 
         const response = await fetch(
-          `https://graph.microsoft.com/v1.0/me/drive/items/${RAMSID}/children`,
+          `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/children`,
           {
             headers: { Authorization: `Bearer ${this.accessToken}` },
           }
         );
         const data = await response.json();
 
-        this.RAMfiles = data.value.filter((item) => !item.name.includes("."));
-        this.isLoadingRAMFiles = false;
+        this.isLoadingFiles = false;
         this.loadingBar.finish();
+        return data.value.filter((item) => !item.name.includes("."));
       } catch (error) {
         this.loadingBar.error();
         this.notification.error({
@@ -267,7 +195,7 @@ export default {
           keepAliveOnHover: true,
         });
         console.error("Error fetching files:", error);
-        this.isLoadingRAMFiles = false;
+        this.isLoadingFiles = false;
       }
     },
     async fetchTemplateFiles() {
@@ -318,6 +246,7 @@ export default {
           }
         );
         const rootFiles = await rootResponse.json();
+        this.RAMSID = rootFiles.value.find((item) => item.name === "RAMS").id;
         this.rootFiles = rootFiles.value;
         return rootFiles.value;
       } catch (err) {
@@ -326,14 +255,17 @@ export default {
           duration: 2500,
           keepAliveOnHover: true,
         });
-        console.error("Error fetching root files:", error);
+        console.error("Error fetching root files:", err);
       }
     },
     async openModal() {
       this.showModal = true;
       await this.fetchTemplateFiles(); // Fetch the template files
     },
-    async createNewRAMS() {
+    async createNewRAMS(data) {
+      this.dateForNewRAMs = data.date;
+      this.projectName = data.projectName;
+      this.newFileTypes = data.selectedFiles;
       this.loadingBar.start();
       try {
         const RAMSID = this.rootFiles.find((item) => item.name === "RAMS").id;
@@ -372,7 +304,7 @@ export default {
           this.copyFileToNewFolder(fileID, newFolderId, fileName);
         });
 
-        await Promise.all([createFilePromises, await this.fetchRAMFiles()]);
+        await Promise.all([createFilePromises, this.fetchRAMsFiles()]);
         this.showModal = false;
         const newFileNames = newFileTypes.map((file) =>
           this.fullFileName(file.split("--")[1])
@@ -392,6 +324,10 @@ export default {
           keepAliveOnHover: true,
         });
       }
+    },
+    async fetchRAMsFiles() {
+      if (this.rootFiles.length === 0) await this.fetchRootFiles();
+      this.RAMfiles = await this.fetchFiles(this.RAMSID);
     },
     async copyFileToNewFolder(fileId, newFolderId, fileName) {
       try {
@@ -455,6 +391,57 @@ export default {
       }
       return `${parsableName} ${count ? `(Ver. ${count})` : ""}`;
     },
+    async downloadPDFs(directoryID) {
+      this.loadingBar.start();
+      try {
+        const files = await this.fetchFiles(directoryID);
+        const pdfFiles = files.filter(
+          (file) => file.name.includes(".docx") || file.name.includes(".xlsx")
+        );
+        console.log(pdfFiles);
+        pdfFiles.forEach((file) => {
+          // this.downloadPDF(file.id);
+        });
+      } catch (error) {
+        this.loadingBar.error();
+        console.error("Error downloading PDF:", error);
+        this.notification.error({
+          content: "Error downloading PDF. Please try again.",
+          duration: 2500,
+          keepAliveOnHover: true,
+        });
+      }
+    },
+    async downloadPDF(fileID: string) {
+      this.loadingBar.start();
+      try {
+        const response = await fetch(
+          `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/content?format=pdf`,
+          {
+            headers: { Authorization: `Bearer ${this.accessToken}` },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Error downloading PDF file");
+        }
+
+        this.loadingBar.finish();
+        this.notification.success({
+          content: "PDF downloaded successfully.",
+          duration: 2500,
+          keepAliveOnHover: true,
+        });
+      } catch (error) {
+        this.loadingBar.error();
+        console.error("Error downloading PDF:", error);
+        this.notification.error({
+          content: "Error downloading PDF. Please try again.",
+          duration: 2500,
+          keepAliveOnHover: true,
+        });
+      }
+    },
   },
   computed: {
     data() {
@@ -463,14 +450,13 @@ export default {
         friendlyName: this.nameToDate(file.name),
         lastModifiedDateTime: `${dayjs(file.lastModifiedDateTime).fromNow()} `,
         webUrl: file.webUrl,
+        id: file.id,
       }));
     },
     currentTime() {
       return dayjs().unix();
     },
-    dateWarning() {
-      return dayjs(this.dateForNewRAMs).isBefore(dayjs().subtract(1, "day"));
-    },
+
     columns() {
       return [
         {
@@ -498,81 +484,37 @@ export default {
           key: "actions",
           render(row) {
             return [
-              h(
-                NButton,
-                {
-                  strong: true,
-                  tertiary: true,
-                  size: "small",
-                  round: true,
-                  type: "info",
-                  onClick: () => open(row.webUrl),
-                },
-                { default: () => "Open in OneDrive" }
-              ),
+              h(NButtonGroup, [
+                h(
+                  NButton,
+                  {
+                    strong: true,
+                    tertiary: true,
+                    size: "small",
+                    round: true,
+                    type: "info",
+                    secondary: true,
+                    onClick: () => open(row.webUrl),
+                  },
+                  { default: () => "Open in OneDrive" }
+                ),
+                h(
+                  NButton,
+                  {
+                    strong: true,
+                    tertiary: true,
+                    size: "small",
+                    round: true,
+                    type: "error",
+                    secondary: true,
+                    onClick: () => downloadPDFs(row.id),
+                  },
+                  { default: () => "Download PDF" }
+                ),
+              ]),
             ];
           },
         },
-      ];
-    },
-    tree(): TreeOption[] {
-      const date = dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY");
-      if (this.newFileTypes.length === 0 || date === "Invalid Date") return [];
-      return [
-        {
-          label: "OneDrive",
-          key: "oneDrive",
-          prefix: () =>
-            h(NIcon, null, {
-              default: () => h(Cloud),
-            }),
-          children: [
-            {
-              label: "RAMS",
-              key: "RAMS",
-              prefix: () =>
-                h(NIcon, null, {
-                  default: () => h(Folder),
-                }),
-              children: [
-                {
-                  label: date,
-                  key: date,
-                  prefix: () =>
-                    h(NIcon, null, {
-                      default: () => h(Folder),
-                    }),
-                  children: this.newFileTypes.map((file) => ({
-                    label: this.fullFileName(file.split("--")[1]),
-                    key: file.split("--")[1],
-                    prefix: () =>
-                      h(NIcon, null, {
-                        default: () =>
-                          h(
-                            this.fullFileName(file.split("--")[1]).includes(
-                              ".xl"
-                            )
-                              ? FileExcel
-                              : this.fullFileName(file.split("--")[1]).includes(
-                                  ".do"
-                                )
-                              ? FileWord
-                              : File
-                          ),
-                      }),
-                  })),
-                },
-              ],
-            },
-          ],
-        },
-      ];
-    },
-    defaultExpandedKeys() {
-      return [
-        "oneDrive",
-        "RAMS",
-        dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
       ];
     },
   },
