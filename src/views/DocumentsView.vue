@@ -33,7 +33,12 @@
     <CreateRAMsModal
       :templateFiles="templateFiles"
       v-model:show="showModal"
-      @create="createNewRAMS"
+      :RAMsID="RAMsID"
+      :accessToken="accessToken"
+      @create="
+        showModal = false;
+        fetchRAMsFiles();
+      "
     />
     <n-float-button-group position="fixed" bottom="30px" right="30px">
       <n-float-button
@@ -70,6 +75,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useNotification, useLoadingBar } from "naive-ui";
+import { access } from "fs";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(relativeTime);
@@ -246,7 +252,7 @@ export default {
           }
         );
         const rootFiles = await rootResponse.json();
-        this.RAMSID = rootFiles.value.find((item) => item.name === "RAMS").id;
+        this.RAMsID = rootFiles.value.find((item) => item.name === "RAMS").id;
         this.rootFiles = rootFiles.value;
         return rootFiles.value;
       } catch (err) {
@@ -262,106 +268,10 @@ export default {
       this.showModal = true;
       await this.fetchTemplateFiles(); // Fetch the template files
     },
-    async createNewRAMS(data) {
-      this.dateForNewRAMs = data.date;
-      this.projectName = data.projectName;
-      this.newFileTypes = data.selectedFiles;
-      this.loadingBar.start();
-      try {
-        const RAMSID = this.rootFiles.find((item) => item.name === "RAMS").id;
-        const newFolderResponse = await fetch(
-          "https://graph.microsoft.com/v1.0/me/drive/items/" +
-            RAMSID +
-            "/children",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${this.accessToken}`,
-            },
-            body: JSON.stringify({
-              name: dayjs.unix(this.dateForNewRAMs / 1000).format("DDMMYYYY"),
-              folder: {},
-              "@microsoft.graph.conflictBehavior": "rename", // Handle conflicts by renaming
-            }),
-          }
-        );
-        if (!newFolderResponse.ok) {
-          throw new Error("Error creating new folder");
-        }
-        this.notification.success({
-          content: "New folder created successfully.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        const newFolder = await newFolderResponse.json();
-        const newFolderId = newFolder.id;
-
-        // 3. Copy each template file to the new folder
-        const newFileTypes = this.newFileTypes;
-        const createFilePromises = newFileTypes.map((file) => {
-          const [fileID, fileName] = file.split("--");
-          this.copyFileToNewFolder(fileID, newFolderId, fileName);
-        });
-
-        await Promise.all([createFilePromises, this.fetchRAMsFiles()]);
-        this.showModal = false;
-        const newFileNames = newFileTypes.map((file) =>
-          this.fullFileName(file.split("--")[1])
-        );
-        this.notification.success({
-          content: `New \n${newFileNames.join("\n")}\ncreated successfully.`,
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        this.loadingBar.finish();
-      } catch (error) {
-        this.loadingBar.error();
-        console.error("Error creating new RAMS directory:", error);
-        this.notification.error({
-          content: "Error creating new RAMS directory. Please try again.",
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-      }
-    },
     async fetchRAMsFiles() {
+      console.log("Fetching RAMs files");
       if (this.rootFiles.length === 0) await this.fetchRootFiles();
-      this.RAMfiles = await this.fetchFiles(this.RAMSID);
-    },
-    async copyFileToNewFolder(fileId, newFolderId, fileName) {
-      try {
-        const copyResponse = await fetch(
-          `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/copy`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${this.accessToken}`,
-            },
-            body: JSON.stringify({
-              parentReference: {
-                driveId: "me",
-                id: newFolderId,
-              },
-              name: this.fullFileName(fileName),
-            }),
-          }
-        );
-        if (!copyResponse.ok) {
-          throw new Error("Error creating new folder");
-        }
-
-        await copyResponse;
-      } catch (error) {
-        console.error("Error copying file:", error);
-        this.notification.error({
-          content: `Error creating file ${fileName}. Please try again.`,
-          duration: 2500,
-          keepAliveOnHover: true,
-        });
-        throw new Error("Error copying file");
-      }
+      this.RAMfiles = await this.fetchFiles(this.RAMsID);
     },
     fullFileName(fileName) {
       if (this.projectName === "") return fileName;
