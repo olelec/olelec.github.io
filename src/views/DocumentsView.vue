@@ -85,6 +85,7 @@ import {
   NButton,
   NButtonGroup,
   NIcon,
+  NBadge,
   useNotification,
   useLoadingBar,
 } from "naive-ui";
@@ -334,7 +335,8 @@ const data = computed(() => {
   return RAMfiles.value.map((file) => ({
     name: file.name,
     friendlyName: nameToDate(file.name),
-    lastModifiedDateTime: `${dayjs(file.lastModifiedDateTime).fromNow()} `,
+    lastModifiedDateTime: dayjs(file.lastModifiedDateTime),
+    lastModifiedDateTimeFromNow: dayjs(file.lastModifiedDateTime).fromNow(),
     webUrl: file.webUrl,
     id: file.id,
   }));
@@ -353,7 +355,6 @@ const columns = computed(() => {
       sorter: (a, b) =>
         dayjs(b.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf() -
         dayjs(a.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf(),
-      defaultSortOrder: "ascend",
     },
     {
       title: "Last Modified",
@@ -361,7 +362,19 @@ const columns = computed(() => {
       sorter: (a, b) =>
         dayjs(b.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf() -
         dayjs(a.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf(),
+      defaultSortOrder: "ascend",
+      render(row) {
+        const isNew = dayjs(row.lastModifiedDateTime).isAfter(
+          dayjs().subtract(1, "hour")
+        );
+        return isNew
+          ? h(NBadge, { value: "new" }, [
+              h("div", null, row.lastModifiedDateTimeFromNow),
+            ])
+          : h("div", null, row.lastModifiedDateTimeFromNow); // Just render the div without the badge if not new
+      },
     },
+
     {
       title: "Action",
       key: "actions",
