@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="documents-view">
     <n-data-table
       :columns="columns"
       :data="data"
@@ -56,7 +56,10 @@
         height="4em"
         :disabled="!isAuthenticated"
       >
-        <n-icon size="2.5em"><Reload /></n-icon>
+        <n-spin v-if="spin" :show="spin" />
+        <n-icon v-else size="2.5em">
+          <Reload />
+        </n-icon>
       </n-float-button>
       <n-float-button
         type="primary"
@@ -103,6 +106,7 @@ const isAuthenticated = ref(false);
 const isLoadingLogin = ref(false);
 const showModal = ref(false);
 const showFolderModal = ref(false);
+const spin = ref(false);
 const RAMfiles = ref([]);
 const rootFiles = ref([]);
 const templateFiles = ref([]);
@@ -298,9 +302,11 @@ const openModal = async () => {
   await fetchTemplateFiles(); // Fetch the template files
 };
 const fetchRAMsFiles = async () => {
+  spin.value = true;
   if (rootFiles.value.length === 0) await fetchRootFiles();
   const allFiles = await fetchFiles(RAMsID.value);
   RAMfiles.value = allFiles.filter((item) => !item.name.includes("."));
+  spin.value = false;
 };
 const open = (url) => {
   window.open(url, "_blank");
@@ -405,24 +411,27 @@ const columns = computed(() => {
 });
 </script>
 
-<style scoped>
-.n-button__content svg {
-  width: 1em;
-  margin-right: 0.5em;
-}
-.n-float-button.info {
-  background-color: #1890ff;
-  color: white;
-}
-#input-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  .n-input {
-    width: 100%;
+<style style="scss">
+#documents-view {
+  .n-button__content svg {
+    width: 1em;
+    margin-right: 0.5em;
   }
-  .n-date-picker {
-    width: 36%;
+  .n-float-button.info,
+  .n-base-loading .n-base-loading__container svg.n-base-loading__icon {
+    background-color: #1890ff;
+    color: white;
+  }
+  #input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    .n-input {
+      width: 100%;
+    }
+    .n-date-picker {
+      width: 36%;
+    }
   }
 }
 </style>
