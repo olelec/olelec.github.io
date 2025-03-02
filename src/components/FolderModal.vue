@@ -28,6 +28,7 @@
       <div class="iframe-container">
         <iframe class="iframe-content" v-if="previewUrl" :src="previewUrl" />
       </div>
+
       <template #footer>
         <n-alert title="Error" type="error" v-if="checkedKeys.length > 1">
           Please Download one at a time</n-alert
@@ -116,14 +117,17 @@ const emit = defineEmits(["close"]);
 
 const updateCheckedKeys = (keys: Array<string>) => {
   if (keys.length === 0) previewUrl.value = "";
-  checkedKeys.value = keys.filter((key) => key !== props.directory.id);
+  checkedKeys.value = keys.filter((key) => !key.includes(props.directory.id));
 };
 const downloadItems = async (pdf: boolean = false) => {
   loadingBar.start();
   const files = checkedKeys.value;
+
   try {
     const pdfPromises = files.map((file) => {
-      download(file, pdf);
+      const [fileId, fileName] = file.split("--");
+
+      download(fileId, fileName, pdf);
     });
     await Promise.all(pdfPromises);
     loadingBar.finish();
@@ -142,34 +146,44 @@ const downloadItems = async (pdf: boolean = false) => {
     });
   }
 };
-const download = async (fileID: string, pdf: boolean) => {
+const download = async (fileID: string, fileName: string, pdf: boolean) => {
   try {
     const response = await fetch(
       `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/content${
-        pdf ? "?format=pdf" : ""
+        (fileName.includes(".pdf") ? false : pdf) ? "?format=pdf" : ""
       }`,
       {
         headers: { Authorization: `Bearer ${props.accessToken}` },
       }
     );
-    const data = await response;
-    open(data.url);
+
     if (!response.ok) {
-      throw new Error("Error downloading PDF file");
+      throw new Error("Error downloading file");
     }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   } catch (error) {
-    console.error("Error downloading PDF:", error);
+    console.error("Error downloading file:", error);
     notification.error({
-      content: "Error downloading PDF. Please try again.",
+      content: "Error downloading file. Please try again.",
       duration: 2500,
       keepAliveOnHover: true,
     });
   }
 };
+
 const preview = async () => {
   loadingBar.start();
   try {
-    const fileID = checkedKeys.value[0];
+    const fileID = checkedKeys.value[0].split("--")[0];
     const response = await fetch(
       `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/preview`,
       {
@@ -229,7 +243,7 @@ const tree = computed<TreeOption[]>(() => {
                 const fileName = file.name;
                 return {
                   label: fileName,
-                  key: file.id,
+                  key: `${file.id}--${fileName}`,
                   prefix: () =>
                     h(NIcon, null, {
                       default: () =>
