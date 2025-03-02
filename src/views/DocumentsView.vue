@@ -508,16 +508,5 @@ const columns = computed(() => {
     background-color: #1890ff;
     color: white;
   }
-  #input-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-    .n-input {
-      width: 100%;
-    }
-    .n-date-picker {
-      width: 36%;
-    }
-  }
 }
 </style>
