@@ -1,5 +1,5 @@
 <template>
-  <n-modal v-model:show="show">
+  <n-modal v-model:show="show" :on-after-leave="closeModal">
     <n-card
       style="width: 50em; min-height: 60vh"
       title="Create New RAMS"
@@ -45,28 +45,17 @@
 
       <br />
       Files Required
-      <n-checkbox-group v-model:value="newFileTypes">
-        <n-space item-style="display: flex;" style="flex-flow: column">
-          <n-checkbox
-            v-for="file in templateFiles"
-            :key="file.id"
-            :value="`${file.id}--${file.name}`"
-            :label="file.name.split('.')[0]"
-          />
-        </n-space>
-      </n-checkbox-group>
+      <n-transfer
+        v-model:value="newFileTypes"
+        :options="options"
+        :render-target-label="renderLabel"
+        target-filter-placeholder="test"
+        source-title="Template Files"
+        target-title="Selected Files"
+      />
 
       <br />
-      The following files will be created
-      <div v-if="tree.length === 0">
-        <br />
-      </div>
-      <n-tree
-        block-line
-        :data="tree"
-        :default-expanded-keys="defaultExpandedKeys"
-        expand-on-click
-      />
+
       <template #footer>
         <n-button
           :disabled="newFileTypes.length === 0 || !dateForNewRAMs"
@@ -83,10 +72,9 @@
 <script setup lang="ts">
 import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import dayjs from "dayjs";
-import type { TreeOption } from "naive-ui";
+import type { TransferRenderTargetLabel } from "naive-ui";
 import { NIcon } from "naive-ui";
 import { FileExcel, FileWord, File } from "@vicons/fa";
-import { Folder, Cloud } from "@vicons/ionicons5";
 import { useNotification, useLoadingBar } from "naive-ui";
 
 const notification = useNotification();
@@ -109,14 +97,21 @@ const props = defineProps({
 
 const show = defineModel({
   prop: "show",
-  event: "update:show",
 });
 
-const emit = defineEmits(["createNewRAMS"]);
+const emit = defineEmits(["create"], ["close"]);
 
 const dateForNewRAMs = ref<number | null>(null);
 const projectName = ref<string>("");
 const newFileTypes = ref<string[]>([]);
+
+const options = computed(() => {
+  return props.templateFiles.map((file) => {
+    const value = `${file.id}--${file.name}`;
+    const label = file.name.split(".")[0];
+    return { value, label };
+  });
+});
 
 const dateWarning = computed(() => {
   return dateForNewRAMs.value
@@ -124,10 +119,69 @@ const dateWarning = computed(() => {
     : false;
 });
 
+const closeModal = () => {
+  dateForNewRAMs.value = null;
+  projectName.value = "";
+  newFileTypes.value = [];
+  emit("close", false);
+};
+
 const fullFileName = (name: string) => {
   if (!projectName.value) return name;
   const splitFileName = name.split(".");
   return `${splitFileName[0]} - ${projectName.value}.${splitFileName[1]}`;
+};
+
+const renderLabel: TransferRenderTargetLabel = ({ option }) => {
+  // Determine file type
+  const fileType = option.value.split(".").pop()?.toLowerCase();
+
+  // Determine the appropriate icon for the file type
+  let icon;
+  switch (fileType) {
+    case "xlsx":
+      icon = FileExcel;
+      break;
+    case "docx":
+      icon = FileWord;
+      break;
+    default:
+      icon = File;
+  }
+
+  return h(
+    "div",
+    {
+      style: {
+        display: "flex",
+        margin: "6px 0",
+      },
+    },
+    {
+      default: () => [
+        h(
+          "div",
+          {
+            style: {
+              display: "flex",
+              marginLeft: "6px",
+              alignSelf: "center",
+            },
+          },
+          {
+            default: () => [
+              h(
+                NIcon,
+                { size: 18, style: { marginRight: "8px" } },
+                { default: () => h(icon) }
+              ),
+              fullFileName(option.value.split("--")[1]),
+            ],
+          }
+        ),
+      ],
+    }
+  );
 };
 
 const createNewRAMS = async () => {
@@ -222,55 +276,6 @@ const copyFileToNewFolder = async (fileId, newFolderId, fileName) => {
     throw new Error("Error copying file");
   }
 };
-
-const tree = computed<TreeOption[]>(() => {
-  if (!dateForNewRAMs.value || newFileTypes.value.length === 0) return [];
-
-  const formattedDate = dayjs
-    .unix(dateForNewRAMs.value / 1000)
-    .format("DDMMYYYY");
-  if (formattedDate === "Invalid Date") return [];
-
-  return [
-    {
-      label: "OneDrive",
-      key: "oneDrive",
-      prefix: () => h(NIcon, null, { default: () => h(Cloud) }),
-      children: [
-        {
-          label: "RAMS",
-          key: "RAMS",
-          prefix: () => h(NIcon, null, { default: () => h(Folder) }),
-          children: [
-            {
-              label: formattedDate,
-              key: formattedDate,
-              prefix: () => h(NIcon, null, { default: () => h(Folder) }),
-              children: newFileTypes.value.map((file) => {
-                const fileName = fullFileName(file.split("--")[1]);
-                return {
-                  label: fileName,
-                  key: file.split("--")[1],
-                  prefix: () =>
-                    h(NIcon, null, {
-                      default: () =>
-                        h(
-                          fileName.includes(".xlsx")
-                            ? FileExcel
-                            : fileName.includes(".docx")
-                            ? FileWord
-                            : File
-                        ),
-                    }),
-                };
-              }),
-            },
-          ],
-        },
-      ],
-    },
-  ];
-});
 
 const defaultExpandedKeys = computed(() => {
   if (!dateForNewRAMs.value) return ["oneDrive", "RAMS"];
