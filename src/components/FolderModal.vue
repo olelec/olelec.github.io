@@ -68,8 +68,8 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  directoryName: {
-    type: String,
+  directory: {
+    type: Object,
     required: true,
   },
 });
@@ -84,12 +84,12 @@ const checkedKeys = ref<string[]>([]);
 const emit = defineEmits(["close"]);
 
 const updateCheckedKeys = (keys: Array<string>) => {
-  checkedKeys.value = keys.filter((key) => key !== props.directoryName);
+  checkedKeys.value = keys.filter((key) => key !== props.directory.id);
 };
 const downloadItems = async (pdf: boolean = false) => {
   loadingBar.start();
   const files = props.folderContents.filter(
-    (file) => file.name !== props.directoryName
+    (file) => file.name !== props.directory.name
   );
   const pdfFiles = files.filter(
     (file) => file.name.includes(".docx") || file.name.includes(".xlsx")
@@ -159,8 +159,8 @@ const tree = computed<TreeOption[]>(() => {
           prefix: () => h(NIcon, null, { default: () => h(Folder) }),
           children: [
             {
-              label: props.directoryName,
-              key: props.directoryName,
+              label: props.directory.name,
+              key: props.directory.id,
               checkboxDisabled: false,
               prefix: () => h(NIcon, null, { default: () => h(Folder) }),
               children: props.folderContents.map((file) => {
@@ -192,7 +192,7 @@ const tree = computed<TreeOption[]>(() => {
 });
 
 const defaultExpandedKeys = computed(() => {
-  return ["oneDrive", "RAMS", props.directoryName];
+  return ["oneDrive", "RAMS", props.directory.id];
 });
 </script>
 
