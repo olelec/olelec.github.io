@@ -78,7 +78,7 @@
 import { PublicClientApplication } from "@azure/msal-browser";
 import CreateRAMsModal from "@/components/CreateRAMsModal.vue";
 import FolderModal from "@/components/FolderModal.vue";
-import { Microsoft } from "@vicons/fa";
+import { Microsoft, Trash } from "@vicons/fa";
 import { Reload, AddCircleOutline, Cloud, Folder } from "@vicons/ionicons5";
 import { h, ref, computed, onMounted } from "vue";
 import {
@@ -86,6 +86,7 @@ import {
   NButtonGroup,
   NIcon,
   NBadge,
+  NPopconfirm,
   useNotification,
   useLoadingBar,
 } from "naive-ui";
@@ -139,12 +140,13 @@ onMounted(async () => {
   checkAccount();
 });
 
-const openFolder = async (folderID, folderName) => {
+const openFolder = async (folderID, folderName, webUrl) => {
   loadingBar.start();
   try {
     const files = await fetchFiles(folderID);
     directory.value.name = folderName;
     directory.value.id = folderID;
+    directory.value.webUrl = webUrl;
     folderContents.value = files;
     showFolderModal.value = true;
     loadingBar.finish();
@@ -298,6 +300,40 @@ const fetchRootFiles = async () => {
     console.error("Error fetching root files:", err);
   }
 };
+const deleteItem = async (itemId) => {
+  loadingBar.start();
+  try {
+    const response = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${itemId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken.value}`,
+        },
+      }
+    );
+    await response;
+    notification.success({
+      content: `Successfully deleted directory and its contents`,
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+    loadingBar.finish();
+    if (!response.ok) {
+      throw new Error("Error deleting file");
+    }
+    fetchRAMsFiles();
+  } catch (error) {
+    loadingBar.error();
+    console.error("Error deleting:", error);
+    notification.error({
+      content: "Error deleting. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+  }
+};
 const openModal = async () => {
   showModal.value = true;
   await fetchTemplateFiles(); // Fetch the template files
@@ -338,6 +374,7 @@ const data = computed(() => {
     lastModifiedDateTime: dayjs(file.lastModifiedDateTime),
     lastModifiedDateTimeFromNow: dayjs(file.lastModifiedDateTime).fromNow(),
     webUrl: file.webUrl,
+    contentsCount: file.folder?.childCount,
     id: file.id,
   }));
 });
@@ -368,10 +405,10 @@ const columns = computed(() => {
           dayjs().subtract(1, "hour")
         );
         return isNew
-          ? h(NBadge, { value: "new" }, [
+          ? h(NBadge, { value: "new", type: "success" }, [
               h("div", null, row.lastModifiedDateTimeFromNow),
             ])
-          : h("div", null, row.lastModifiedDateTimeFromNow); // Just render the div without the badge if not new
+          : h("div", null, row.lastModifiedDateTimeFromNow);
       },
     },
 
@@ -381,6 +418,26 @@ const columns = computed(() => {
       render(row) {
         return [
           h(NButtonGroup, [
+            h(NBadge, { value: row.contentsCount, type: "info" }, [
+              h(
+                NButton,
+                {
+                  strong: true,
+                  tertiary: true,
+                  size: "small",
+                  round: true,
+                  type: "info",
+                  secondary: true,
+                  onClick: () => openFolder(row.id, row.name, row.webUrl),
+                },
+                {
+                  default: () => [
+                    h(NIcon, null, { default: () => h(Folder) }),
+                    h("span", { style: { marginLeft: "0.25em" } }, "Open"),
+                  ],
+                }
+              ),
+            ]),
             h(
               NButton,
               {
@@ -389,31 +446,47 @@ const columns = computed(() => {
                 size: "small",
                 round: true,
                 type: "info",
-                secondary: true,
-                onClick: () => openFolder(row.id, row.name),
-              },
-              {
-                default: () => [
-                  h(NIcon, null, { default: () => h(Folder) }),
-                  h("span", { style: { marginLeft: "0.25em" } }, "Open"), // Adding a small gap
-                ],
-              }
-            ),
-            h(
-              NButton,
-              {
-                strong: true,
-                tertiary: true,
-                size: "small",
-                round: true,
-                type: "info", // Pick either 'info' or 'secondary' depending on your design preference
                 onClick: () => open(row.webUrl),
               },
               {
                 default: () => [
                   h(NIcon, null, { default: () => h(Cloud) }),
-                  h("span", { style: { marginLeft: "0.25em" } }, "OneDrive"), // Adding a small gap
+                  h("span", { style: { marginLeft: "0.25em" } }, "OneDrive"),
                 ],
+              }
+            ),
+            h(
+              NPopconfirm,
+              {
+                onPositiveClick: () => deleteItem(row.id),
+                onNegativeClick: () => console.log("Cancelled"),
+                "positive-text": "Delete",
+              },
+              {
+                trigger: () =>
+                  h(
+                    NButton,
+                    {
+                      strong: true,
+                      tertiary: true,
+                      size: "small",
+                      round: true,
+                      type: "error",
+                      secondary: true,
+                    },
+                    {
+                      default: () => [
+                        h(NIcon, null, { default: () => h(Trash) }),
+                        h(
+                          "span",
+                          { style: { marginLeft: "0.25em" } },
+                          "Delete"
+                        ),
+                      ],
+                    }
+                  ),
+                default: () =>
+                  `Are you sure you want to delete the ${row.name} folder?`,
               }
             ),
           ]),

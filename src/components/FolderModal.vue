@@ -62,6 +62,16 @@
             Download as PDF
           </n-button>
         </n-button-group>
+        <n-button
+          @click="open(directory.webUrl)"
+          type="info"
+          tertiary
+          round
+          style="float: right"
+        >
+          <n-icon> <Cloud /> </n-icon>
+          OneDrive
+        </n-button>
       </template>
     </n-card>
   </n-modal>
@@ -75,7 +85,6 @@ import { FileExcel, FileWord, FilePdf, File, Download } from "@vicons/fa";
 import { PreviewFilled } from "@vicons/material";
 import { Folder, Cloud } from "@vicons/ionicons5";
 import { useNotification, useLoadingBar } from "naive-ui";
-import router from "../router";
 
 const notification = useNotification();
 const loadingBar = useLoadingBar();
@@ -190,7 +199,6 @@ const preview = async () => {
 const open = (url) => {
   window.open(url, "_blank");
 };
-
 const closeModal = () => {
   emit("close");
   previewUrl.value = "";
@@ -215,7 +223,7 @@ const tree = computed<TreeOption[]>(() => {
             {
               label: props.directory.name,
               key: props.directory.id,
-              checkboxDisabled: false,
+              checkboxDisabled: true,
               prefix: () => h(NIcon, null, { default: () => h(Folder) }),
               children: props.folderContents.map((file) => {
                 const fileName = file.name;
