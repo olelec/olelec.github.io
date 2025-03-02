@@ -44,7 +44,7 @@
       v-model:show="showFolderModal"
       :folderContents="folderContents"
       :accessToken="accessToken"
-      :directoryName="directoryName"
+      :directory="directory"
       @close="showFolderModal = false"
     />
     <n-float-button-group position="fixed" bottom="30px" right="30px">
@@ -107,7 +107,7 @@ const RAMfiles = ref([]);
 const rootFiles = ref([]);
 const templateFiles = ref([]);
 const folderContents = ref([]);
-const directoryName = ref("");
+const directory = ref({});
 
 const config = {
   auth: {
@@ -138,7 +138,8 @@ const openFolder = async (folderID, folderName) => {
   loadingBar.start();
   try {
     const files = await fetchFiles(folderID);
-    directoryName.value = folderName;
+    directory.value.name = folderName;
+    directory.value.id = folderID;
     folderContents.value = files;
     showFolderModal.value = true;
     loadingBar.finish();
