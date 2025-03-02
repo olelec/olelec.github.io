@@ -8,16 +8,39 @@
       role="dialog"
       aria-modal="true"
     >
-      Date - Project Name
-      <div id="input-group">
+      Directory Name
+      <div class="input-group">
+        <n-date-picker
+          v-model:value="dateForNewRAMs"
+          type="date"
+          format="ddMMyyyy"
+          placeholder="RAMS Date"
+          :status="dateWarning ? 'warning' : 'default'"
+        />
+      </div>
+      <br />
+      File Name
+      <div class="input-group">
         <n-input-group>
-          <n-date-picker
-            v-model:value="dateForNewRAMs"
-            type="date"
-            format="dd/MM/yyyy"
-            :status="dateWarning ? 'warning' : 'default'"
-          />
+          <n-input-group-label> Type </n-input-group-label>
+          <n-input-group-label> - </n-input-group-label>
           <n-input
+            id="location-input"
+            v-model:value="projectLocation"
+            show-count
+            placeholder="Location (Optional)"
+          >
+            <template #count="{ value }">
+              <span
+                :style="{ color: value.length > 15 ? 'orange' : 'inherit' }"
+              >
+                {{ `${value.length}/20` }}
+              </span>
+            </template>
+          </n-input>
+          <n-input-group-label> - </n-input-group-label>
+          <n-input
+            id="name-input"
             v-model:value="projectName"
             show-count
             placeholder="Project Name (Optional)"
@@ -44,7 +67,6 @@
       </n-alert>
 
       <br />
-      Files Required
       <n-transfer
         v-model:value="newFileTypes"
         :options="options"
@@ -103,6 +125,7 @@ const emit = defineEmits(["create"], ["close"]);
 
 const dateForNewRAMs = ref<number | null>(null);
 const projectName = ref<string>("");
+const projectLocation = ref<string>("");
 const newFileTypes = ref<string[]>([]);
 
 const options = computed(() => {
@@ -122,14 +145,18 @@ const dateWarning = computed(() => {
 const closeModal = () => {
   dateForNewRAMs.value = null;
   projectName.value = "";
+  projectLocation.value = "";
   newFileTypes.value = [];
   emit("close", false);
 };
 
 const fullFileName = (name: string) => {
-  if (!projectName.value) return name;
-  const splitFileName = name.split(".");
-  return `${splitFileName[0]} - ${projectName.value}.${splitFileName[1]}`;
+  const [fileName, fileType] = name.split(".");
+  let returnName = fileName;
+  if (projectLocation.value) returnName += ` - ${projectLocation.value}`;
+  if (projectName.value) returnName += ` - ${projectName.value}`;
+  returnName += `.${fileType}`;
+  return returnName;
 };
 
 const renderLabel: TransferRenderTargetLabel = ({ option }) => {
@@ -286,3 +313,20 @@ const defaultExpandedKeys = computed(() => {
   ];
 });
 </script>
+
+<style scoped style="scss">
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  .n-input#name-input {
+    width: 50%;
+  }
+  .n-input#location-input {
+    width: 30%;
+  }
+  .n-date-picker {
+    width: 36%;
+  }
+}
+</style>
