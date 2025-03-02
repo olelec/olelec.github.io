@@ -25,12 +25,24 @@
           Please Download one at a time</n-alert
         >
         <br />
-        <n-button
-          @click="downloadPDFs"
-          :disabled="checkedKeys.length > 1"
-          type="error"
-          >Download PDF</n-button
-        >
+        <n-button-group>
+          <n-button
+            @click="downloadItems(false)"
+            :disabled="checkedKeys.length !== 1"
+            type="info"
+          >
+            <n-icon> <Download /> </n-icon>
+            Download
+          </n-button>
+          <n-button
+            @click="downloadItems(true)"
+            :disabled="checkedKeys.length !== 1"
+            type="error"
+          >
+            <n-icon> <file-pdf /> </n-icon>
+            Download as PDF
+          </n-button>
+        </n-button-group>
       </template>
     </n-card>
   </n-modal>
@@ -40,7 +52,7 @@
 import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import type { TreeOption } from "naive-ui";
 import { NIcon } from "naive-ui";
-import { FileExcel, FileWord, FilePdf, File } from "@vicons/fa";
+import { FileExcel, FileWord, FilePdf, File, Download } from "@vicons/fa";
 import { Folder, Cloud } from "@vicons/ionicons5";
 import { useNotification, useLoadingBar } from "naive-ui";
 
@@ -74,7 +86,7 @@ const emit = defineEmits(["close"]);
 const updateCheckedKeys = (keys: Array<string>) => {
   checkedKeys.value = keys.filter((key) => key !== props.directoryName);
 };
-const downloadPDFs = async () => {
+const downloadItems = async (pdf: boolean = false) => {
   loadingBar.start();
   const files = props.folderContents.filter(
     (file) => file.name !== props.directoryName
@@ -84,7 +96,7 @@ const downloadPDFs = async () => {
   );
   try {
     const pdfPromises = pdfFiles.map((file) => {
-      downloadPDF(file.id);
+      download(file.id, pdf);
     });
     await Promise.all(pdfPromises);
     loadingBar.finish();
@@ -103,10 +115,12 @@ const downloadPDFs = async () => {
     });
   }
 };
-const downloadPDF = async (fileID: string) => {
+const download = async (fileID: string, pdf: boolean) => {
   try {
     const response = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/content?format=pdf`,
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/content${
+        pdf ? "?format=pdf" : ""
+      }`,
       {
         headers: { Authorization: `Bearer ${props.accessToken}` },
       }
@@ -181,3 +195,9 @@ const defaultExpandedKeys = computed(() => {
   return ["oneDrive", "RAMS", props.directoryName];
 });
 </script>
+
+<style scoped lang="scss">
+.n-button .n-icon {
+  margin-right: 0.5em;
+}
+</style>
