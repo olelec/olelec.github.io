@@ -139,12 +139,13 @@ onMounted(async () => {
   checkAccount();
 });
 
-const openFolder = async (folderID, folderName) => {
+const openFolder = async (folderID, folderName, webUrl) => {
   loadingBar.start();
   try {
     const files = await fetchFiles(folderID);
     directory.value.name = folderName;
     directory.value.id = folderID;
+    directory.value.webUrl = webUrl;
     folderContents.value = files;
     showFolderModal.value = true;
     loadingBar.finish();
@@ -338,6 +339,7 @@ const data = computed(() => {
     lastModifiedDateTime: dayjs(file.lastModifiedDateTime),
     lastModifiedDateTimeFromNow: dayjs(file.lastModifiedDateTime).fromNow(),
     webUrl: file.webUrl,
+    contentsCount: file.folder?.childCount,
     id: file.id,
   }));
 });
@@ -368,10 +370,10 @@ const columns = computed(() => {
           dayjs().subtract(1, "hour")
         );
         return isNew
-          ? h(NBadge, { value: "new" }, [
+          ? h(NBadge, { value: "new", type: "success" }, [
               h("div", null, row.lastModifiedDateTimeFromNow),
             ])
-          : h("div", null, row.lastModifiedDateTimeFromNow); // Just render the div without the badge if not new
+          : h("div", null, row.lastModifiedDateTimeFromNow);
       },
     },
 
@@ -381,6 +383,27 @@ const columns = computed(() => {
       render(row) {
         return [
           h(NButtonGroup, [
+            h(NBadge, { value: row.contentsCount, type: "info" }, [
+              h(
+                NButton,
+                {
+                  strong: true,
+                  tertiary: true,
+                  size: "small",
+                  round: true,
+                  type: "info",
+                  secondary: true,
+                  onClick: () => openFolder(row.id, row.name, row.webUrl),
+                },
+                {
+                  default: () => [
+                    h(NIcon, null, { default: () => h(Folder) }),
+                    h("span", { style: { marginLeft: "0.25em" } }, "Open"),
+                  ],
+                }
+              ),
+            ]),
+
             h(
               NButton,
               {
@@ -389,30 +412,12 @@ const columns = computed(() => {
                 size: "small",
                 round: true,
                 type: "info",
-                secondary: true,
-                onClick: () => openFolder(row.id, row.name),
-              },
-              {
-                default: () => [
-                  h(NIcon, null, { default: () => h(Folder) }),
-                  h("span", { style: { marginLeft: "0.25em" } }, "Open"), // Adding a small gap
-                ],
-              }
-            ),
-            h(
-              NButton,
-              {
-                strong: true,
-                tertiary: true,
-                size: "small",
-                round: true,
-                type: "info", // Pick either 'info' or 'secondary' depending on your design preference
                 onClick: () => open(row.webUrl),
               },
               {
                 default: () => [
                   h(NIcon, null, { default: () => h(Cloud) }),
-                  h("span", { style: { marginLeft: "0.25em" } }, "OneDrive"), // Adding a small gap
+                  h("span", { style: { marginLeft: "0.25em" } }, "OneDrive"),
                 ],
               }
             ),
