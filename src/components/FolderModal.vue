@@ -1,8 +1,12 @@
 <template>
-  <n-modal v-model:show="show">
+  <n-modal v-model:show="show" id="folder-modal" :on-after-leave="closeModal">
     <n-card
-      style="width: 50em; min-height: 60vh"
-      title="Create New RAMS"
+      :style="
+        previewUrl
+          ? 'width: 80%; height: 90vh;'
+          : 'width: 50em; min-height: 60vh'
+      "
+      :title="`Directory: ${props.directory.name}`"
       :bordered="false"
       size="huge"
       role="dialog"
@@ -20,6 +24,10 @@
         :checkable="true"
         @update:checked-keys="updateCheckedKeys"
       />
+      <br />
+      <div class="iframe-container">
+        <iframe class="iframe-content" v-if="previewUrl" :src="previewUrl" />
+      </div>
       <template #footer>
         <n-alert title="Error" type="error" v-if="checkedKeys.length > 1">
           Please Download one at a time</n-alert
@@ -27,9 +35,19 @@
         <br />
         <n-button-group>
           <n-button
+            @click="preview"
+            :disabled="checkedKeys.length !== 1"
+            type="primary"
+            round
+          >
+            <n-icon> <preview-filled /> </n-icon>
+            Preview
+          </n-button>
+          <n-button
             @click="downloadItems(false)"
             :disabled="checkedKeys.length !== 1"
             type="info"
+            round
           >
             <n-icon> <Download /> </n-icon>
             Download
@@ -38,6 +56,7 @@
             @click="downloadItems(true)"
             :disabled="checkedKeys.length !== 1"
             type="error"
+            round
           >
             <n-icon> <file-pdf /> </n-icon>
             Download as PDF
@@ -53,8 +72,10 @@ import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import type { TreeOption } from "naive-ui";
 import { NIcon } from "naive-ui";
 import { FileExcel, FileWord, FilePdf, File, Download } from "@vicons/fa";
+import { PreviewFilled } from "@vicons/material";
 import { Folder, Cloud } from "@vicons/ionicons5";
 import { useNotification, useLoadingBar } from "naive-ui";
+import router from "../router";
 
 const notification = useNotification();
 const loadingBar = useLoadingBar();
@@ -80,23 +101,20 @@ const show = defineModel({
 });
 
 const checkedKeys = ref<string[]>([]);
+const previewUrl = ref<string>("");
 
 const emit = defineEmits(["close"]);
 
 const updateCheckedKeys = (keys: Array<string>) => {
+  if (keys.length === 0) previewUrl.value = "";
   checkedKeys.value = keys.filter((key) => key !== props.directory.id);
 };
 const downloadItems = async (pdf: boolean = false) => {
   loadingBar.start();
-  const files = props.folderContents.filter(
-    (file) => file.name !== props.directory.name
-  );
-  const pdfFiles = files.filter(
-    (file) => file.name.includes(".docx") || file.name.includes(".xlsx")
-  );
+  const files = checkedKeys.value;
   try {
-    const pdfPromises = pdfFiles.map((file) => {
-      download(file.id, pdf);
+    const pdfPromises = files.map((file) => {
+      download(file, pdf);
     });
     await Promise.all(pdfPromises);
     loadingBar.finish();
@@ -139,8 +157,44 @@ const download = async (fileID: string, pdf: boolean) => {
     });
   }
 };
+const preview = async () => {
+  loadingBar.start();
+  try {
+    const fileID = checkedKeys.value[0];
+    const response = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/preview`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${props.accessToken}`,
+        },
+      }
+    );
+    const data = await response.json();
+    previewUrl.value = data.getUrl;
+    loadingBar.finish();
+    if (!response.ok) {
+      throw new Error("Error previewing file");
+    }
+  } catch (error) {
+    loadingBar.error();
+    console.error("Error previewing:", error);
+    notification.error({
+      content: "Error previewing. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+  }
+};
 const open = (url) => {
   window.open(url, "_blank");
+};
+
+const closeModal = () => {
+  emit("close");
+  previewUrl.value = "";
+  checkedKeys.value = [];
 };
 
 // computed
@@ -196,8 +250,26 @@ const defaultExpandedKeys = computed(() => {
 });
 </script>
 
-<style scoped lang="scss">
-.n-button .n-icon {
-  margin-right: 0.5em;
+<style lang="scss">
+#folder-modal {
+  .n-card__content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .iframe-container {
+    flex: 1;
+    display: flex;
+  }
+
+  .iframe-content {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+  }
+
+  .n-button .n-icon {
+    margin-right: 0.5em;
+  }
 }
 </style>
