@@ -32,16 +32,21 @@ jobs:
           NEW_VERSION=$(npm version patch --no-git-tag-version)
           echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
 
-      - name: Update Changelog
-        id: changelog
-        run: |
-          echo "## [${{ env.NEW_VERSION }}] - $(date +'%Y-%m-%d')" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0)..HEAD >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          cat CHANGELOG.md | head -n 20 >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          - name: Update Changelog
+          id: changelog
+          run: |
+            echo "## [${{ env.NEW_VERSION }}] - $(date +'%Y-%m-%d')" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            LAST_TAG=$(git describe --tags --abbrev=0 || echo "first-commit")
+            if [ "$LAST_TAG" != "first-commit" ]; then
+              git log --pretty=format:"- %s" $LAST_TAG..HEAD >> CHANGELOG.md
+            else
+              git log --pretty=format:"- %s" --reverse >> CHANGELOG.md
+            fi
+            echo "" >> CHANGELOG.md
+            echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+            cat CHANGELOG.md | head -n 20 >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
 
       - name: Commit & Push Version Bump
         run: |
