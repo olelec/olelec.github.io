@@ -1,3 +1,9 @@
+## [v0.0.5] - 2025-03-04
+
+- Merge pull request #43 from olelec/build/pipelines
+- fix: deploy workflow not starting
+- fix: release including everything in the changelog.md
+
 ## [v0.0.1] - 2025-03-04
 
 
