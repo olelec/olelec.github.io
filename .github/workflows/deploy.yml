@@ -40,7 +40,7 @@ jobs:
         run: mkdir -p ./dist/assets/email; cp -r ./assets/email/* ./dist/assets/email/
 
       - name: Copy index.html to dist/404.html for Vue dynamic routing
-        run: cp -r ./index.html ./dist/404.html
+        run: cp -r ./dist/index.html ./dist/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
