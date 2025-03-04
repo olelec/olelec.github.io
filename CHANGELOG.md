@@ -12,3 +12,7 @@
 
 - Merge pull request #41 from olelec/build/pipelines
 - build: add additional triggers for deploy action
+## [v0.0.4] - 2025-03-04
+
+- Merge pull request #42 from olelec/build/pipelines
+- fix: deploy file copying wrong index.html
