@@ -1,0 +1,62 @@
+name: Release Version
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.14.0"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Determine next version
+        id: version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          NEW_VERSION=$(npm version patch --no-git-tag-version)
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+
+      - name: Update Changelog
+        id: changelog
+        run: |
+          echo "## [${{ env.NEW_VERSION }}] - $(date +'%Y-%m-%d')" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0)..HEAD >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          cat CHANGELOG.md | head -n 20 >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Commit & Push Version Bump
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions@github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "chore(release): bump version to ${{ env.NEW_VERSION }}"
+          git tag ${{ env.NEW_VERSION }}
+          git push origin main --tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          name: Release ${{ env.NEW_VERSION }}
+          body: ${{ env.CHANGELOG }}
+          draft: false
+          prerelease: false
