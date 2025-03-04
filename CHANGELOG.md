@@ -8,3 +8,7 @@
 - Merge pull request #39 from olelec/build/pipelines
 - build: fix changelog not generating
 - build: fix deployment trigger
+## [v0.0.3] - 2025-03-04
+
+- Merge pull request #41 from olelec/build/pipelines
+- build: add additional triggers for deploy action
