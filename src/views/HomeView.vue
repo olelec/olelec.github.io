@@ -28,6 +28,12 @@ import industrialImage5 from "@/assets/Project9 (1).jpg";
 import industrialImage6 from "@/assets/Project10 (1).jpg";
 import industrialImage7 from "@/assets/Project11 (1).jpg";
 import industrialImage8 from "@/assets/Project12 (1).jpg";
+import {
+  LocalPhoneFilled,
+  PhoneIphoneRound,
+  LocationOnFilled,
+  EmailFilled,
+} from "@vicons/material";
 
 const refurbishmentImages = ref([
   projectImage1,
@@ -153,50 +159,64 @@ const industrialImages = ref([
       <h2>Contact Us</h2>
     </div>
     <div class="contact-grid">
+      <div class="enquiry-container">
+        <h3>Make an Enquiry</h3>
+        <iframe
+          src="https://tradehq.com/olearyelec/enquire"
+          loading="lazy"
+          title="Enquiry Form"
+        >
+        </iframe>
+      </div>
+
       <div class="contact-info">
         <h3>Get in Touch</h3>
         <p>
+          <n-icon size="20"><email-filled /></n-icon>
           <strong>Email:</strong>
-          <a href="mailto:patricia@terrabuild.ie">patricia@terrabuild.ie</a>
+          <a href="mailto:enquiries@terrabuild.ie">enquiries@terrabuild.ie</a>
         </p>
 
         <div class="phone-numbers">
           <p><strong>Phone:</strong></p>
           <p>
-            📞 <strong>Donal:</strong> <a href="tel:0872838894">087 283 8894</a>
+            <n-icon size="20"><phone-iphone-round /></n-icon>
+            <strong>Donal:</strong>
+            <a href="tel:0872838894">087 283 8894</a>
           </p>
           <p>
-            📞 <strong>Patricia:</strong>
+            <n-icon size="20"><phone-iphone-round /></n-icon>
+            <strong>Patricia:</strong>
             <a href="tel:0878126549">087 812 6549</a>
           </p>
           <p>
-            📞 <strong>Telephone:</strong>
+            <n-icon size="20"><local-phone-filled /></n-icon>
+            <strong>Telephone:</strong>
             <a href="tel:0238839474">023 8839 474</a>
           </p>
         </div>
 
         <h3>Address</h3>
         <p>
-          📍 Laws Cross, Ahalisky, Ballinascarthy, Clonakilty, Co. Cork, P85
-          PP93
+          <n-icon size="20"><location-on-filled /></n-icon>
+          Laws Cross, Ahalisky, Ballinascarthy, Clonakilty, Co. Cork, P85 PP93
         </p>
 
-        <h3>Service Areas</h3>
-        <p>
+        <h3 class="service-areas">Service Areas</h3>
+        <p class="service-areas">
           We are based in West Cork but operate throughout Ireland, including:
         </p>
-        <p class="locations">
+        <p class="locations service-areas">
           Cork • Limerick • Waterford • Kerry • Galway • Dublin • More...
         </p>
-      </div>
-
-      <div class="map-container">
         <iframe
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d9894.200621948483!2d-8.847461216656148!3d51.68637669967105!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x484457ff7fa97b93%3A0x497212848aa36000!2sAhalisky%2C%20Co.%20Cork%2C%20P85%20PP93!5e0!3m2!1sen!2sie!4v1705356054738!5m2!1sen!2sie"
           allowfullscreen
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
           title="Google Maps"
+          id="map"
+          style="height: 50rem; padding-top: 2em"
         ></iframe>
       </div>
     </div>
@@ -291,17 +311,24 @@ section {
   gap: 3rem;
 }
 
-.contact-info {
+.contact-info,
+.enquiry-container {
   background: white;
-  padding: 4rem;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
-.map-container {
+.contact-info {
+  padding: 4em;
+}
+
+.enquiry-container {
   width: 100%;
-  height: 450px;
+  padding-top: 4em;
+  padding-left: 0em;
+  padding-right: 0em;
+  padding-bottom: 0em;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -310,5 +337,12 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
+}
+
+@media (max-width: 600px) {
+  #map,
+  .service-areas {
+    display: none;
+  }
 }
 </style>

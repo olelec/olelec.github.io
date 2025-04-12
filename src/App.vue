@@ -27,7 +27,9 @@ const userEmail = computed(() => authStore.getUserEmail);
 
         <div class="contact-info">
           <a href="tel:0878126549">📱 087 812 6549</a>
-          <a href="mailto:patricia@terrabuild.ie">✉️ patricia@terrabuild.ie</a>
+          <a href="mailto:enquiries@terrabuild.ie"
+            >✉️ enquiries@terrabuild.ie</a
+          >
         </div>
       </div>
 
