@@ -1,3 +1,8 @@
+## [v0.0.6] - 2025-04-12
+
+- Merge pull request #44 from olelec/feat/contactInfo
+- feat: update contact information
+
 ## [v0.0.5] - 2025-03-04
 
 - Merge pull request #43 from olelec/build/pipelines
