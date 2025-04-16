@@ -1,3 +1,11 @@
+## [v1.0.10] - 2025-04-16
+
+- Merge pull request #48 from olelec/feat/usability
+- fix(FolderModal): apply copilot readability suggestion
+- fix: sonar issues
+- docs: add badges
+- feat: remove nested calculator label in navigation
+
 ## [v1.0.9] - 2025-04-16
 
 - Merge pull request #47 from olelec/feat/display-version-url
