@@ -1,3 +1,8 @@
+## [v1.0.9] - 2025-04-16
+
+- Merge pull request #47 from olelec/feat/display-version-url
+- feat: add redirect to the github release when version is clicked
+
 ## [v1.0.8] - 2025-04-16
 
 - Merge pull request #46 from olelec/feat/display-version
