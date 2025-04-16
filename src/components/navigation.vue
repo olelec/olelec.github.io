@@ -62,21 +62,15 @@ const menuOptions: MenuOption[] = computed(() => {
   } else if (router.currentRoute.value.path.includes("/staff")) {
     return [
       {
-        label: "Tools",
-        key: "home",
-        children: [
-          {
-            label: () =>
-              h(
-                RouterLink,
-                {
-                  to: "/staff/calculator",
-                },
-                { default: () => "Calculators" }
-              ),
-            key: "Calculator",
-          },
-        ],
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: "/staff/calculator",
+            },
+            { default: () => "Calculators" }
+          ),
+        key: "Calculator",
       },
 
       {
