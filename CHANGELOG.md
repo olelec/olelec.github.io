@@ -1,3 +1,8 @@
+## [v0.0.7] - 2025-04-16
+
+- Merge pull request #45 from olelec/feat/remote-editor
+- feat: added button to edit files in browser
+
 ## [v0.0.6] - 2025-04-12
 
 - Merge pull request #44 from olelec/feat/contactInfo
