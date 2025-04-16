@@ -9,6 +9,7 @@ const authStore = useAuthStore();
 const userEmail = computed(() => authStore.getUserEmail);
 
 const version = ref<string | null>(null);
+const releaseUrl = ref<string | null>(null);
 
 onMounted(async () => {
   try {
@@ -16,7 +17,8 @@ onMounted(async () => {
     const response = await fetch(url);
     const data = await response.json();
     version.value = data[0].tag_name;
-    console.info("Latest release:", version.value);
+    releaseUrl.value = data[0].html_url;
+    console.info("Latest release:", version.value, releaseUrl.value);
   } catch (error) {
     console.error("Failed to fetch version:", error);
     version.value = "N/A";
@@ -45,8 +47,15 @@ onMounted(async () => {
             >✉️ enquiries@terrabuild.ie</a
           >
         </div>
-        <div v-else>
-          {{ version?.toUpperCase() }}
+        <div :href="releaseUrl" v-else>
+          <a
+            v-if="userEmail !== '' && releaseUrl"
+            :href="releaseUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ version?.toUpperCase() }}
+          </a>
         </div>
       </div>
 
