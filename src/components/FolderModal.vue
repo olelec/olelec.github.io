@@ -26,7 +26,12 @@
       />
       <br />
       <div class="iframe-container">
-        <iframe class="iframe-content" v-if="previewUrl" :src="previewUrl" />
+        <iframe
+          title="Preview"
+          class="iframe-content"
+          v-if="previewUrl"
+          :src="previewUrl"
+        />
       </div>
 
       <template #footer>
@@ -87,11 +92,10 @@
 <script setup lang="ts">
 import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import type { TreeOption } from "naive-ui";
-import { NIcon } from "naive-ui";
+import { NIcon, useNotification, useLoadingBar } from "naive-ui";
 import { FileExcel, FileWord, FilePdf, File, Download, Edit } from "@vicons/fa";
 import { PreviewFilled } from "@vicons/material";
 import { Folder, Cloud } from "@vicons/ionicons5";
-import { useNotification, useLoadingBar } from "naive-ui";
 
 const notification = useNotification();
 const loadingBar = useLoadingBar();
@@ -163,10 +167,17 @@ const downloadItems = async (pdf: boolean = false) => {
 };
 const download = async (fileID: string, fileName: string, pdf: boolean) => {
   try {
+    let format;
+    if (fileName.includes(".pdf")) {
+      format = "";
+    } else if (pdf) {
+      format = "?format=pdf";
+    } else {
+      format = "";
+    }
+
     const response = await fetch(
-      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/content${
-        (fileName.includes(".pdf") ? false : pdf) ? "?format=pdf" : ""
-      }`,
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/content${format}`,
       {
         headers: { Authorization: `Bearer ${props.accessToken}` },
       }
@@ -261,16 +272,7 @@ const tree = computed<TreeOption[]>(() => {
                   key: `${file.id}--${fileName}`,
                   prefix: () =>
                     h(NIcon, null, {
-                      default: () =>
-                        h(
-                          fileName.includes(".xlsx")
-                            ? FileExcel
-                            : fileName.includes(".docx")
-                            ? FileWord
-                            : fileName.includes(".pdf")
-                            ? FilePdf
-                            : File
-                        ),
+                      default: () => h(getFileIcon(fileName)),
                     }),
                 };
               }),
@@ -281,6 +283,13 @@ const tree = computed<TreeOption[]>(() => {
     },
   ];
 });
+
+const getFileIcon = (fileName: string) => {
+  if (fileName.includes(".xlsx")) return FileExcel;
+  if (fileName.includes(".docx")) return FileWord;
+  if (fileName.includes(".pdf")) return FilePdf;
+  return File;
+};
 
 const defaultExpandedKeys = computed(() => {
   return ["oneDrive", "RAMS", props.directory.id];

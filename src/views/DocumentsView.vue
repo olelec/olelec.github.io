@@ -364,7 +364,7 @@ const nameToDate = (name) => {
   } else if (parsableName.length === 6) {
     parsableName = dayjs(parsableName, "DDMMYY").format("DD/MMM/YYYY");
   }
-  return `${parsableName} ${count ? `(Ver. ${count})` : ""}`;
+  return parsableName + (count ? "(Ver. " + count + ")" : "");
 };
 
 const data = computed(() => {

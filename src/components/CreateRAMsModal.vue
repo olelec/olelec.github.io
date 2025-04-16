@@ -94,8 +94,8 @@
 <script setup lang="ts">
 import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import dayjs from "dayjs";
-import type { TransferRenderTargetLabel } from "naive-ui";
-import { NIcon } from "naive-ui";
+import { type TransferRenderTargetLabel, NIcon } from "naive-ui";
+
 import { FileExcel, FileWord, File } from "@vicons/fa";
 import { useNotification, useLoadingBar } from "naive-ui";
 
