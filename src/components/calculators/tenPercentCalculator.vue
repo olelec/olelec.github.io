@@ -9,9 +9,13 @@ const railStyle = (state: { checked: boolean; focused: boolean }) => {
   return {
     background: state.checked ? "#0C5700" : "#d03050",
     boxShadow: state.focused
-      ? `0 0 0 2px ${state.checked ? "#08380050" : "#d0305040"}`
+      ? `0 0 0 2px ${boxShadowCheckedColor(state.checked)}`
       : undefined,
   } as CSSProperties;
+};
+
+const boxShadowCheckedColor = (state: boolean) => {
+  return state ? "#0C5700" : "#d03050";
 };
 
 const calculate = computed(() => {
