@@ -4,7 +4,7 @@
       :style="
         previewUrl
           ? 'width: 80%; height: 90vh;'
-          : 'width: 50em; min-height: 60vh'
+          : 'width: 60em; min-height: 60vh'
       "
       :title="`Directory: ${props.directory.name}`"
       :bordered="false"
@@ -45,6 +45,16 @@
             Preview
           </n-button>
           <n-button
+            @click="openWebEditor()"
+            :disabled="checkedKeys.length !== 1"
+            type="info"
+            tertiary
+            round
+          >
+            <n-icon> <Edit /> </n-icon>
+            Web Editor
+          </n-button>
+          <n-button
             @click="downloadItems(false)"
             :disabled="checkedKeys.length !== 1"
             type="info"
@@ -63,16 +73,12 @@
             Download as PDF
           </n-button>
         </n-button-group>
-        <n-button
-          @click="open(directory.webUrl)"
-          type="info"
-          tertiary
-          round
-          style="float: right"
-        >
-          <n-icon> <Cloud /> </n-icon>
-          OneDrive
-        </n-button>
+        <n-button-group style="float: right">
+          <n-button @click="open(directory.webUrl)" type="info" tertiary round>
+            <n-icon> <Cloud /> </n-icon>
+            OneDrive
+          </n-button>
+        </n-button-group>
       </template>
     </n-card>
   </n-modal>
@@ -82,7 +88,7 @@
 import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import type { TreeOption } from "naive-ui";
 import { NIcon } from "naive-ui";
-import { FileExcel, FileWord, FilePdf, File, Download } from "@vicons/fa";
+import { FileExcel, FileWord, FilePdf, File, Download, Edit } from "@vicons/fa";
 import { PreviewFilled } from "@vicons/material";
 import { Folder, Cloud } from "@vicons/ionicons5";
 import { useNotification, useLoadingBar } from "naive-ui";
@@ -118,6 +124,15 @@ const emit = defineEmits(["close"]);
 const updateCheckedKeys = (keys: Array<string>) => {
   if (keys.length === 0) previewUrl.value = "";
   checkedKeys.value = keys.filter((key) => !key.includes(props.directory.id));
+};
+const openWebEditor = () => {
+  const files = checkedKeys.value;
+  const selectedFile: any = props.folderContents.find(
+    (file: any) => file.id === files[0].split("--")[0]
+  );
+  const url = selectedFile.webUrl;
+
+  open(url);
 };
 const downloadItems = async (pdf: boolean = false) => {
   loadingBar.start();
