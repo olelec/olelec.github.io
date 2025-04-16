@@ -1,3 +1,9 @@
+## [v1.0.8] - 2025-04-16
+
+- Merge pull request #46 from olelec/feat/display-version
+- feat: major upversion
+- feat: display version to users
+
 ## [v0.0.7] - 2025-04-16
 
 - Merge pull request #45 from olelec/feat/remote-editor
