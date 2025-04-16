@@ -168,15 +168,12 @@ const downloadItems = async (pdf: boolean = false) => {
 const download = async (fileID: string, fileName: string, pdf: boolean) => {
   try {
     let format;
-    switch (true) {
-      case fileName.includes(".pdf"):
-        format = "";
-        break;
-      case pdf:
-        format = "?format=pdf";
-        break;
-      default:
-        format = "";
+    if (fileName.includes(".pdf")) {
+      format = "";
+    } else if (pdf) {
+      format = "?format=pdf";
+    } else {
+      format = "";
     }
 
     const response = await fetch(
