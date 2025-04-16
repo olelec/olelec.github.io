@@ -1,13 +1,27 @@
 <script setup lang="ts">
 import { RouterView, RouterLink } from "vue-router";
 import { useAuthStore } from "./store/authStore";
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import navigation from "@/components/navigation.vue";
-import { darkTheme, useOsTheme } from "naive-ui";
 
 const authStore = useAuthStore();
 
 const userEmail = computed(() => authStore.getUserEmail);
+
+const version = ref<string | null>(null);
+
+onMounted(async () => {
+  try {
+    const url = "https://api.github.com/repos/olelec/olelec.github.io/releases";
+    const response = await fetch(url);
+    const data = await response.json();
+    version.value = data[0].tag_name;
+    console.info("Latest release:", version.value);
+  } catch (error) {
+    console.error("Failed to fetch version:", error);
+    version.value = "N/A";
+  }
+});
 </script>
 
 <template>
@@ -25,11 +39,14 @@ const userEmail = computed(() => authStore.getUserEmail);
           <RouterLink v-else to="login" class="auth">Login</RouterLink>
         </div>
 
-        <div class="contact-info">
+        <div class="contact-info" v-if="userEmail === ''">
           <a href="tel:0878126549">📱 087 812 6549</a>
           <a href="mailto:enquiries@terrabuild.ie"
             >✉️ enquiries@terrabuild.ie</a
           >
+        </div>
+        <div v-else>
+          {{ version?.toUpperCase() }}
         </div>
       </div>
 
