@@ -1,3 +1,8 @@
+## [v1.0.11] - 2025-04-17
+
+- Merge pull request #49 from olelec/dependabot/npm_and_yarn/npm_and_yarn-7c3af66382
+- build(deps-dev): bump vite in the npm_and_yarn group across 1 directory
+
 ## [v1.0.10] - 2025-04-16
 
 - Merge pull request #48 from olelec/feat/usability
