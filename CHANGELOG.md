@@ -1,3 +1,8 @@
+## [v1.0.13] - 2025-04-19
+
+- Merge branch 'main' of github.com:olelec/olelec.github.io
+- fix: duplicate deployments
+
 ## [v1.0.12] - 2025-04-19
 
 - build: stop auto deploying releases
