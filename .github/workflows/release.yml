@@ -38,9 +38,9 @@ jobs:
           NEW_CHANGELOG="## [${{ env.NEW_VERSION }}] - $(date +'%Y-%m-%d')\n\n"
           LAST_TAG=$(git describe --tags --abbrev=0 || echo "first-commit")
           if [ "$LAST_TAG" != "first-commit" ]; then
-              NEW_CHANGELOG+=$(git log --pretty=format:"- %s" $LAST_TAG..HEAD)
+              NEW_CHANGELOG+=$(git log --no-merges --pretty=format:"- %s" $LAST_TAG..HEAD)
           else
-              NEW_CHANGELOG+=$(git log --pretty=format:"- %s" --reverse)
+              NEW_CHANGELOG+=$(git log --no-merges --pretty=format:"- %s" --reverse)
           fi
           echo -e "$NEW_CHANGELOG\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
