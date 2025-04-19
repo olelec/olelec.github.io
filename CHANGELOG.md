@@ -1,3 +1,8 @@
+## [v1.0.12] - 2025-04-19
+
+- build: stop auto deploying releases
+- docs: update badge colors and add website status badge
+
 ## [v1.0.11] - 2025-04-17
 
 - Merge pull request #49 from olelec/dependabot/npm_and_yarn/npm_and_yarn-7c3af66382
