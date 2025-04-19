@@ -1,3 +1,8 @@
+## [v1.0.15] - 2025-04-19
+
+- fix: merges showing in release notes
+- docs: fix broken order of changelog from initial workflows
+
 ## [v1.0.14] - 2025-04-19
 
 - Merge branch 'main' of github.com:olelec/olelec.github.io
