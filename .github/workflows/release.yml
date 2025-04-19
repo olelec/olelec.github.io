@@ -43,10 +43,9 @@ jobs:
               NEW_CHANGELOG+=$(git log --pretty=format:"- %s" --reverse)
           fi
           echo -e "$NEW_CHANGELOG\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
-
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo -e "$NEW_CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NEW_CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Commit & Push Version Bump
         run: |
@@ -62,6 +61,6 @@ jobs:
         with:
           tag_name: ${{ env.NEW_VERSION }}
           name: Release ${{ env.NEW_VERSION }}
-          body: ${{ env.CHANGELOG }}
+          body: ${{ steps.changelog.outputs.changelog }}
           draft: true
           prerelease: false
