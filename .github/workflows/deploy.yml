@@ -2,10 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   release:
-    types: [created, published, released]
-  workflow_run:
-    workflows: ["Release Version"]
-    types: [completed]
+    types: [published, released]
 
 permissions:
   contents: read
