@@ -1,3 +1,8 @@
+## [v1.0.14] - 2025-04-19
+
+- Merge branch 'main' of github.com:olelec/olelec.github.io
+- build: fix changelog being incomplete in release for unreleased tags
+
 ## [v1.0.13] - 2025-04-19
 
 - Merge branch 'main' of github.com:olelec/olelec.github.io
