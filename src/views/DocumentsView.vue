@@ -401,11 +401,23 @@ const columns = computed(() => {
         dayjs(a.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf(),
       defaultSortOrder: "ascend",
       render(row) {
+        let tagValue = "";
+        let tagType = "";
         const isNew = dayjs(row.lastModifiedDateTime).isAfter(
-          dayjs().subtract(1, "hour")
+          dayjs().subtract(1, "day")
         );
-        return isNew
-          ? h(NBadge, { value: "new", type: "success" }, [
+        const isRecent = dayjs(row.lastModifiedDateTime).isAfter(
+          dayjs().subtract(14, "day")
+        );
+        if (isNew) {
+          tagValue = "New";
+          tagType = "success";
+        } else if (isRecent) {
+          tagValue = "Recent";
+          tagType = "info";
+        }
+        return isRecent
+          ? h(NBadge, { value: tagValue, type: tagType }, [
               h("div", null, row.lastModifiedDateTimeFromNow),
             ])
           : h("div", null, row.lastModifiedDateTimeFromNow);

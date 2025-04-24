@@ -298,7 +298,7 @@ const getFileIcon = (fileName: string) => {
 const getFileIconColor = (filename: string) => {
   if (filename.includes(".xlsx")) return "green";
   if (filename.includes(".docx")) return "#2B7CD3";
-  if (filename.includes(".pdf")) return "red";
+  if (filename.includes(".pdf")) return "#cc0000";
   return "";
 };
 
