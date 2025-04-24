@@ -1,3 +1,8 @@
+## [v1.1.2] - 2025-04-24
+
+- feat: changed color for pdf icon to darker red
+- feat: added recent tag for directories
+
 ## [v1.1.1] - 2025-04-24
 
 - build: bump version
