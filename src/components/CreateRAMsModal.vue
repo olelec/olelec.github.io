@@ -165,15 +165,19 @@ const renderLabel: TransferRenderTargetLabel = ({ option }) => {
 
   // Determine the appropriate icon for the file type
   let icon;
+  let color;
   switch (fileType) {
     case "xlsx":
       icon = FileExcel;
+      color = "green";
       break;
     case "docx":
       icon = FileWord;
+      color = "#2B7CD3";
       break;
     default:
       icon = File;
+      color = "";
   }
 
   return h(
@@ -199,7 +203,7 @@ const renderLabel: TransferRenderTargetLabel = ({ option }) => {
             default: () => [
               h(
                 NIcon,
-                { size: 18, style: { marginRight: "8px" } },
+                { size: 18, style: { marginRight: "8px" }, color: color },
                 { default: () => h(icon) }
               ),
               fullFileName(option.value.split("--")[1]),

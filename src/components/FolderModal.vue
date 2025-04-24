@@ -271,9 +271,13 @@ const tree = computed<TreeOption[]>(() => {
                   label: fileName,
                   key: `${file.id}--${fileName}`,
                   prefix: () =>
-                    h(NIcon, null, {
-                      default: () => h(getFileIcon(fileName)),
-                    }),
+                    h(
+                      NIcon,
+                      { color: getFileIconColor(fileName) },
+                      {
+                        default: () => h(getFileIcon(fileName)),
+                      }
+                    ),
                 };
               }),
             },
@@ -289,6 +293,13 @@ const getFileIcon = (fileName: string) => {
   if (fileName.includes(".docx")) return FileWord;
   if (fileName.includes(".pdf")) return FilePdf;
   return File;
+};
+
+const getFileIconColor = (filename: string) => {
+  if (filename.includes(".xlsx")) return "green";
+  if (filename.includes(".docx")) return "#2B7CD3";
+  if (filename.includes(".pdf")) return "red";
+  return "";
 };
 
 const defaultExpandedKeys = computed(() => {
