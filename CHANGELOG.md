@@ -1,3 +1,10 @@
+## [v1.1.1] - 2025-04-24
+
+- build: bump version
+- feat: add colors to file icons
+- feat: update signature
+- fix: missing lang and description
+
 ## [v1.0.15] - 2025-04-19
 
 - fix: merges showing in release notes
