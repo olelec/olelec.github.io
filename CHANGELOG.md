@@ -1,3 +1,7 @@
+## [v1.1.3] - 2025-04-30
+
+- build(deps-dev): bump vite in the npm_and_yarn group across 1 directory
+
 ## [v1.1.2] - 2025-04-24
 
 - feat: changed color for pdf icon to darker red
