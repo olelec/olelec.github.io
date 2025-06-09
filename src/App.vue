@@ -13,6 +13,12 @@ const releaseUrl = ref<string | null>(null);
 
 onMounted(async () => {
   try {
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    console.log(siteKey);
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    document.head.appendChild(script);
+
     const url = "https://api.github.com/repos/olelec/olelec.github.io/releases";
     const response = await fetch(url);
     const data = await response.json();
