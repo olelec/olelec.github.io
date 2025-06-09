@@ -1,3 +1,7 @@
+## [v1.1.5] - 2025-06-09
+
+- fix: floating button covered by recaptcha
+
 ## [v1.1.4] - 2025-06-09
 
 - chore: remove console log
