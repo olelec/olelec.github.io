@@ -47,7 +47,7 @@
       :directory="directory"
       @close="showFolderModal = false"
     />
-    <n-float-button-group position="fixed" bottom="30px" right="30px">
+    <n-float-button-group position="fixed" bottom="90px" right="30px">
       <n-float-button
         @click="fetchRAMsFiles"
         class="info"
