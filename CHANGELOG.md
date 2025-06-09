@@ -1,3 +1,10 @@
+## [v1.1.4] - 2025-06-09
+
+- chore: remove console log
+- feat: add env var secrets
+- feat: add reCAPTCHA
+- fix: sonar issues
+
 ## [v1.1.3] - 2025-04-30
 
 - build(deps-dev): bump vite in the npm_and_yarn group across 1 directory
