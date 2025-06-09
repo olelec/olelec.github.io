@@ -20,20 +20,26 @@
 
 ## Project Setup
 
-```sh
+```bash
 nvm use
 
 npm install
 ```
 
+Add Azure, Firebase and reCAPTCHA environment variables to `.env` file. Use `.env.example` as a template.
+
+```bash
+cp .env.example .env
+```
+
 ### Compile and Hot-Reload for Development
 
-```sh
+```bash
 npm run dev
 ```
 
 ### Compile and Minify for Production
 
-```sh
+```bash
 npm run build
 ```
