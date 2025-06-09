@@ -117,13 +117,12 @@ const directory = ref({});
 
 const config = {
   auth: {
-    clientId: "4963f47c-b2e5-4c6e-a419-a5c79ba5a68a",
-    authority:
-      "https://login.microsoftonline.com/07e22eb9-ae7d-4de8-8781-9f9585b2f007",
-    redirectUri: "",
+    clientId: import.meta.env.VITE_AZURE_CLIENT_ID,
+    authority: import.meta.env.VITE_AZURE_AUTHORITY,
+    redirectUri: window.location.origin,
   },
   cache: {
-    cacheLocation: "sessionStorage", // or "localStorage"
+    cacheLocation: "sessionStorage",
     storeAuthStateInCookie: false,
   },
 };
