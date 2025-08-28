@@ -28,6 +28,14 @@ import industrialImage5 from "@/assets/Project9 (1).jpg";
 import industrialImage6 from "@/assets/Project10 (1).jpg";
 import industrialImage7 from "@/assets/Project11 (1).jpg";
 import industrialImage8 from "@/assets/Project12 (1).jpg";
+import drivewayImage1 from "@/assets/Project13 (1).jpg";
+import drivewayImage2 from "@/assets/Project13 (2).jpg";
+import drivewayImage3 from "@/assets/Project13 (3).jpg";
+import drivewayImage4 from "@/assets/Project13 (4).jpg";
+import drivewayImage5 from "@/assets/Project13 (5).jpg";
+import drivewayImage6 from "@/assets/Project13 (6).jpg";
+import drivewayImage7 from "@/assets/Project13 (7).jpg";
+
 import {
   LocalPhoneFilled,
   PhoneIphoneRound,
@@ -66,6 +74,15 @@ const industrialImages = ref([
   industrialImage6,
   industrialImage7,
   industrialImage8,
+]);
+const drivewayImages = ref([
+  drivewayImage1,
+  drivewayImage2,
+  drivewayImage3,
+  drivewayImage4,
+  drivewayImage5,
+  drivewayImage6,
+  drivewayImage7,
 ]);
 </script>
 
@@ -130,6 +147,20 @@ const industrialImages = ref([
         <n-space justify="center">
           <n-image
             v-for="url in refurbishmentImages"
+            :src="url"
+            object-fit="cover"
+            width="300"
+            height="400"
+          />
+        </n-space>
+      </n-image-group>
+    </div>
+    <h3>Driveways</h3>
+    <div class="projects-grid">
+      <n-image-group>
+        <n-space justify="center">
+          <n-image
+            v-for="url in drivewayImages"
             :src="url"
             object-fit="cover"
             width="300"
