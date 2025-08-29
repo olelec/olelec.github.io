@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, CSSProperties, ref } from "vue";
+import katex from "katex";
+import "katex/dist/katex.css";
 
 const inputAmount = ref(0);
 const rate = ref(23);
 const mode = ref(true);
+const katexRef = ref(katex);
 
 const rateRailStyle = ({
   checked,
@@ -59,6 +62,16 @@ const formattedCalculate = computed(() => {
   return calculate.value.map((num) => (isNaN(num) ? "0.00" : num.toFixed(2)));
 });
 
+const equation = computed(() => {
+  return mode.value
+    ? `${inputAmount.value || "Amount"}\\times\\big(\\frac{${
+        rate.value
+      }}{100}\\big) `
+    : `\\frac{${inputAmount.value || "Amount"} }{ \\big(1 +  \\frac{${
+        rate.value
+      }}{100} \\big) } `;
+});
+
 function updateMode(value: boolean) {
   mode.value = value;
 }
@@ -110,8 +123,7 @@ function updateVatRate(value: number) {
     <br />
     <i>
       Calculation formula:
-      <template v-if="mode">Amount * ({{ rate }} / 100)</template>
-      <template v-else>Amount / (1 + {{ rate }} / 100)</template>
+      <n-equation :katex="katexRef" :value="equation" />
     </i>
   </div>
 </template>

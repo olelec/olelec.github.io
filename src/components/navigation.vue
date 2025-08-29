@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
 import { computed, h, defineProps } from "vue";
-import type { MenuOption } from "naive-ui";
-import router from ".././router";
+
+// use auth store
+import { useAuthStore } from "../store/authStore";
+const authStore = useAuthStore();
 
 defineProps({
   mode: {
@@ -11,8 +13,34 @@ defineProps({
   },
 });
 
-const menuOptions: MenuOption[] = computed(() => {
-  if (router.currentRoute.value.path === "/") {
+const menuOptions = computed(() => {
+  if (authStore.getUserEmail) {
+    return [
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: "/calculator",
+            },
+            { default: () => "Calculators" }
+          ),
+        key: "Calculator",
+      },
+
+      {
+        label: () =>
+          h(
+            RouterLink,
+            {
+              to: "/documents",
+            },
+            { default: () => "Documents" }
+          ),
+        key: "Documents",
+      },
+    ];
+  } else {
     return [
       {
         label: () =>
@@ -57,32 +85,6 @@ const menuOptions: MenuOption[] = computed(() => {
             { default: () => "Contact" }
           ),
         key: "Contact",
-      },
-    ];
-  } else if (router.currentRoute.value.path.includes("/staff")) {
-    return [
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: "/staff/calculator",
-            },
-            { default: () => "Calculators" }
-          ),
-        key: "Calculator",
-      },
-
-      {
-        label: () =>
-          h(
-            RouterLink,
-            {
-              to: "/staff/documents",
-            },
-            { default: () => "Documents" }
-          ),
-        key: "Documents",
       },
     ];
   }
