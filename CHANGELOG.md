@@ -1,3 +1,7 @@
+## [v1.1.9] - 2025-08-29
+
+- chore: minor sonar changes
+
 ## [v1.1.8] - 2025-08-29
 
 - build: reenabled analysis on prs
