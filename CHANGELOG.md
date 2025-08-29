@@ -1,3 +1,7 @@
+## [v1.1.6] - 2025-08-28
+
+- feat: add new images
+
 ## [v1.1.5] - 2025-06-09
 
 - fix: floating button covered by recaptcha
