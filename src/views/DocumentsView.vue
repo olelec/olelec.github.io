@@ -75,9 +75,13 @@
 </template>
 
 <script setup lang="ts">
-import { PublicClientApplication } from "@azure/msal-browser";
-import CreateRAMsModal from "@/components/CreateRAMsModal.vue";
-import FolderModal from "@/components/FolderModal.vue";
+import {
+  AuthenticationResult,
+  AccountInfo,
+  PublicClientApplication,
+} from "@azure/msal-browser";
+import CreateRAMsModal from "../components/CreateRAMsModal.vue";
+import FolderModal, { Directory } from "../components/FolderModal.vue";
 import { Microsoft, Trash } from "@vicons/fa";
 import { Reload, AddCircleOutline, Cloud, Folder } from "@vicons/ionicons5";
 import { h, ref, computed, onMounted } from "vue";
@@ -94,26 +98,63 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import relativeTime from "dayjs/plugin/relativeTime";
 
+export interface DriveItem {
+  createdBy: {
+    user: {
+      id: string;
+      displayName: string;
+    };
+  };
+  createdDateTime: string;
+  cTag: string;
+  eTag: string;
+  folder?: { childCount: number };
+  id: string;
+  lastModifiedBy: {
+    user: {
+      id: string;
+      displayName: string;
+    };
+  };
+  lastModifiedDateTime: string;
+  name: string;
+  root?: object;
+  size?: number;
+  webUrl?: string;
+}
+
+interface RowData {
+  name: string;
+  friendlyName: string;
+  lastModifiedDateTime: dayjs.Dayjs;
+  lastModifiedDateTimeFromNow: string;
+  webUrl: string;
+  contentsCount?: number;
+  id: string;
+}
+
 dayjs.extend(customParseFormat);
 dayjs.extend(relativeTime);
 
 const notification = useNotification();
 const loadingBar = useLoadingBar();
+
 const accessToken = ref("");
 const isLoadingFiles = ref(false);
 const RAMsID = ref("");
+const accessExpiry = ref("");
 const accountId = ref("");
-const accountName = ref("");
+const accountName = ref<string>("");
 const isAuthenticated = ref(false);
 const isLoadingLogin = ref(false);
 const showModal = ref(false);
 const showFolderModal = ref(false);
 const spin = ref(false);
-const RAMfiles = ref([]);
-const rootFiles = ref([]);
-const templateFiles = ref([]);
-const folderContents = ref([]);
-const directory = ref({});
+const RAMfiles = ref<DriveItem[]>([]);
+const rootFiles = ref<DriveItem[]>([]);
+const templateFiles = ref<DriveItem[]>([]);
+const folderContents = ref<DriveItem[]>([]);
+const directory = ref<Directory>({ name: "", id: "", webUrl: "" });
 
 const config = {
   auth: {
@@ -130,7 +171,7 @@ const loginRequest = {
   scopes: ["User.Read", "Files.ReadWrite"],
 };
 
-let myMsal;
+let myMsal: PublicClientApplication;
 
 onMounted(async () => {
   config.auth.redirectUri = window.location.origin;
@@ -139,7 +180,11 @@ onMounted(async () => {
   checkAccount();
 });
 
-const openFolder = async (folderID, folderName, webUrl) => {
+const openFolder = async (
+  folderID: string,
+  folderName: string,
+  webUrl: string
+) => {
   loadingBar.start();
   try {
     const files = await fetchFiles(folderID);
@@ -159,7 +204,7 @@ const openFolder = async (folderID, folderName, webUrl) => {
     });
   }
 };
-const fetchFiles = async (fileID) => {
+const fetchFiles = async (fileID: string): Promise<DriveItem[]> => {
   loadingBar.start();
   try {
     isLoadingFiles.value = true;
@@ -172,9 +217,15 @@ const fetchFiles = async (fileID) => {
     );
     const data = await response.json();
 
+    if (!data.value) throw new Error("No files in response");
+
+    const responseData = data.value as DriveItem[];
+
+    if (!data) throw new Error(data.error);
+
     isLoadingFiles.value = false;
     loadingBar.finish();
-    return data.value;
+    return responseData;
   } catch (error) {
     loadingBar.error();
     notification.error({
@@ -184,6 +235,7 @@ const fetchFiles = async (fileID) => {
     });
     console.error("Error fetching files:", error);
     isLoadingFiles.value = false;
+    throw error;
   }
 };
 
@@ -197,14 +249,19 @@ const initializeMsal = async () => {
     loadingBar.error();
   }
 };
-const login = async () => {
+const login = async (): Promise<void> => {
   isLoadingLogin.value = true;
   loadingBar.start();
   try {
-    const loginResponse = await myMsal.loginPopup(loginRequest);
-    accountId.value = loginResponse.account.homeAccountId;
-    accountName.value = loginResponse.account.name;
-    accessToken.value = loginResponse.accessToken;
+    const loginResponse: AuthenticationResult = await myMsal.loginPopup(
+      loginRequest
+    );
+    if (!loginResponse) {
+      throw new Error("Login failed");
+    }
+    accountId.value = loginResponse?.account?.homeAccountId;
+    accountName.value = loginResponse?.account?.name || "";
+    accessToken.value = loginResponse?.accessToken;
     isAuthenticated.value = true;
     notification.success({
       content: "Welcome " + loginResponse.account.name,
@@ -225,28 +282,34 @@ const login = async () => {
     isLoadingLogin.value = false;
   }
 };
-const checkAccount = async () => {
-  const accounts = myMsal.getAllAccounts();
+const checkAccount = async (): Promise<boolean> => {
+  const accounts: AccountInfo[] = myMsal.getAllAccounts();
   if (accounts.length > 0) {
-    accountId.value = accounts[0].homeAccountId;
-    accountName.value = accounts[0].name;
-    accessToken.value = accounts[0].accessToken;
+    accountId.value = accounts[0]?.homeAccountId;
+    accountName.value = accounts[0]?.name || "";
+    accessExpiry.value = dayjs
+      .unix(accounts[0]?.idTokenClaims?.exp || 0)
+      .toISOString();
     isAuthenticated.value = true;
+    return true;
+  } else {
+    isAuthenticated.value = false;
+    return false;
   }
 };
 
 const fetchTemplateFiles = async () => {
   loadingBar.start();
   try {
-    if (rootFiles.value.length === 0) await fetchRootFiles();
+    if (rootFiles.value?.length === 0) await fetchRootFiles();
 
     const templateDir = rootFiles.value.find(
-      (item) => item.name === "Templates"
+      (item: DriveItem) => item?.name === "Templates"
     );
     if (!templateDir) {
       throw new Error("Templates directory not found");
     }
-    const templateDirID = templateDir.id;
+    const templateDirID = templateDir?.id;
 
     const response = await fetch(
       `https://graph.microsoft.com/v1.0/me/drive/items/${templateDirID}/children`,
@@ -256,7 +319,7 @@ const fetchTemplateFiles = async () => {
     );
     const data = await response.json();
 
-    const filteredFiles = data.value.filter((item) => {
+    const filteredFiles = data.value.filter((item: DriveItem) => {
       return item.name.includes(".");
     });
     templateFiles.value = filteredFiles;
@@ -286,9 +349,14 @@ const fetchRootFiles = async () => {
         headers: { Authorization: `Bearer ${accessToken.value}` },
       }
     );
-    const rootFilesData = await rootResponse.json();
-    RAMsID.value = rootFilesData.value.find((item) => item.name === "RAMS").id;
-    rootFiles.value = rootFilesData.value;
+    const rootFilesData: DriveItem[] | any = await rootResponse.json();
+    if (rootFilesData.error) {
+      throw new Error(rootFilesData.error);
+    }
+    RAMsID.value =
+      rootFilesData?.value.find((item: DriveItem) => item?.name === "RAMS")
+        ?.id || "";
+    rootFiles.value = rootFilesData;
     return rootFiles.value;
   } catch (err) {
     notification.error({
@@ -299,7 +367,7 @@ const fetchRootFiles = async () => {
     console.error("Error fetching root files:", err);
   }
 };
-const deleteItem = async (itemId) => {
+const deleteItem = async (itemId: number) => {
   loadingBar.start();
   try {
     const response = await fetch(
@@ -339,15 +407,24 @@ const openModal = async () => {
 };
 const fetchRAMsFiles = async () => {
   spin.value = true;
-  if (rootFiles.value.length === 0) await fetchRootFiles();
+  if (rootFiles.value?.length === 0) await fetchRootFiles();
+  if (!RAMsID.value) {
+    await fetchRootFiles();
+    return;
+  }
   const allFiles = await fetchFiles(RAMsID.value);
-  RAMfiles.value = allFiles.filter((item) => !item.name.includes("."));
+  const filteredFiles = allFiles?.filter(
+    (item: DriveItem) => !item.name.includes(".")
+  );
+  if (filteredFiles?.length !== 0) {
+    RAMfiles.value = filteredFiles as DriveItem[];
+  }
   spin.value = false;
 };
-const open = (url) => {
+const open = (url: string) => {
   window.open(url, "_blank");
 };
-const nameToDate = (name) => {
+const nameToDate = (name: string) => {
   let parsableName = name;
   let count = 0;
   if (
@@ -356,7 +433,7 @@ const nameToDate = (name) => {
     ((name.length === 10 || name.length === 8) && name.includes(" "))
   ) {
     parsableName = name.slice(0, -1).trimEnd();
-    count = name.slice(-1);
+    count = Number(name.slice(-1));
   }
   if (parsableName.length === 8) {
     parsableName = dayjs(parsableName, "DDMMYYYY").format("DD/MMM/YYYY");
@@ -367,7 +444,7 @@ const nameToDate = (name) => {
 };
 
 const data = computed(() => {
-  return RAMfiles.value.map((file) => ({
+  return RAMfiles.value.map((file: DriveItem) => ({
     name: file.name,
     friendlyName: nameToDate(file.name),
     lastModifiedDateTime: dayjs(file.lastModifiedDateTime),
@@ -375,7 +452,7 @@ const data = computed(() => {
     webUrl: file.webUrl,
     contentsCount: file.folder?.childCount,
     id: file.id,
-  }));
+  })) as RowData[];
 });
 
 const columns = computed(() => {
@@ -383,25 +460,26 @@ const columns = computed(() => {
     {
       title: "Directory Name",
       key: "name",
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      sorter: (a: RowData, b: RowData) => a.name.localeCompare(b.name),
     },
     {
       title: "Friendly Name",
       key: "friendlyName",
-      sorter: (a, b) =>
+      sorter: (a: RowData, b: RowData) =>
         dayjs(b.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf() -
         dayjs(a.friendlyName.split(" ")[0], "DD/MMM/YYYY").valueOf(),
     },
     {
       title: "Last Modified",
       key: "lastModifiedDateTime",
-      sorter: (a, b) =>
+      sorter: (a: RowData, b: RowData) =>
         dayjs(b.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf() -
         dayjs(a.lastModifiedDateTime, "YYYY-MM-DDTHH:mm:ss").valueOf(),
       defaultSortOrder: "ascend",
-      render(row) {
+      render(row: RowData) {
         let tagValue = "";
-        let tagType = "";
+        let tagType: "default" | "success" | "error" | "warning" | "info" =
+          "default";
         const isNew = dayjs(row.lastModifiedDateTime).isAfter(
           dayjs().subtract(1, "day")
         );
@@ -426,7 +504,7 @@ const columns = computed(() => {
     {
       title: "Action",
       key: "actions",
-      render(row) {
+      render(row: RowData) {
         return [
           h(NButtonGroup, [
             h(NBadge, { value: row.contentsCount, type: "info" }, [
@@ -469,8 +547,7 @@ const columns = computed(() => {
             h(
               NPopconfirm,
               {
-                onPositiveClick: () => deleteItem(row.id),
-                onNegativeClick: () => console.log("Cancelled"),
+                onPositiveClick: () => deleteItem(Number(row.id)),
                 "positive-text": "Delete",
               },
               {

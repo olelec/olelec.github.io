@@ -1,23 +1,14 @@
-name: Deploy to GitHub Pages
+name: Build Project
 
 on:
-  release:
-    types: [released]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -46,18 +37,3 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
-
-      - name: Copy assets for email signature
-        run: mkdir -p ./dist/assets/email; cp -r ./assets/email/* ./dist/assets/email/
-
-      - name: Copy index.html to dist/404.html for Vue dynamic routing
-        run: cp -r ./dist/index.html ./dist/404.html
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "dist"
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
