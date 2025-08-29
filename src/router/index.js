@@ -19,26 +19,20 @@ const router = createRouter({
     },
     {
       path: "/staff",
-      name: "staff",
-      component: StaffView,
+      name: "staff-dashboard",
+      component: StaffDashboardView,
       meta: { requiresAuth: true },
-      children: [
-        {
-          path: "",
-          name: "staff-dashboard",
-          component: StaffDashboardView,
-        },
-        {
-          path: "calculator",
-          name: "Calculator",
-          component: CalculatorView,
-        },
-        {
-          path: "documents",
-          name: "Documents",
-          component: DocumentsView,
-        },
-      ],
+    },
+    {
+      path: "/calculator",
+      name: "Calculator",
+      component: CalculatorView,
+    },
+    {
+      path: "/documents",
+      name: "Documents",
+      component: DocumentsView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/login",
