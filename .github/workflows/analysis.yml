@@ -2,10 +2,7 @@ name: Analysis
 on:
   push:
     branches:
-      - "**"
-      - "!main"
-  pull_request:
-    types: [opened, synchronize, reopened]
+      - "main"
 jobs:
   analysis:
     name: Analysis
