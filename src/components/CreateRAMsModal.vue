@@ -95,6 +95,7 @@
 import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import dayjs from "dayjs";
 import { type TransferRenderTargetLabel, NIcon } from "naive-ui";
+import { DriveItem } from "../views/DocumentsView.vue";
 
 import { FileExcel, FileWord, File } from "@vicons/fa";
 import { useNotification, useLoadingBar } from "naive-ui";
@@ -102,26 +103,15 @@ import { useNotification, useLoadingBar } from "naive-ui";
 const notification = useNotification();
 const loadingBar = useLoadingBar();
 
-const props = defineProps({
-  templateFiles: {
-    type: Array,
-    required: true,
-  },
-  RAMsID: {
-    type: String,
-    required: true,
-  },
-  accessToken: {
-    type: String,
-    required: true,
-  },
-});
+const props = defineProps<{
+  templateFiles: DriveItem[] | undefined;
+  RAMsID: string;
+  accessToken: string;
+}>();
 
-const show = defineModel({
-  prop: "show",
-});
+const show = defineModel<boolean>("show");
 
-const emit = defineEmits(["create"], ["close"]);
+const emit = defineEmits(["create", "close"]);
 
 const dateForNewRAMs = ref<number | null>(null);
 const projectName = ref<string>("");
@@ -129,7 +119,7 @@ const projectLocation = ref<string>("");
 const newFileTypes = ref<string[]>([]);
 
 const options = computed(() => {
-  return props.templateFiles.map((file) => {
+  return props.templateFiles?.map((file) => {
     const value = `${file.id}--${file.name}`;
     const label = file.name.split(".")[0];
     return { value, label };
@@ -161,7 +151,7 @@ const fullFileName = (name: string) => {
 
 const renderLabel: TransferRenderTargetLabel = ({ option }) => {
   // Determine file type
-  const fileType = option.value.split(".").pop()?.toLowerCase();
+  const fileType = String(option.value).split(".").pop()?.toLowerCase();
 
   // Determine the appropriate icon for the file type
   let icon;
@@ -206,7 +196,7 @@ const renderLabel: TransferRenderTargetLabel = ({ option }) => {
                 { size: 18, style: { marginRight: "8px" }, color: color },
                 { default: () => h(icon) }
               ),
-              fullFileName(option.value.split("--")[1]),
+              fullFileName(String(option.value).split("--")[1]),
             ],
           }
         ),
@@ -229,7 +219,9 @@ const createNewRAMS = async () => {
           Authorization: `Bearer ${props.accessToken}`,
         },
         body: JSON.stringify({
-          name: dayjs.unix(dateForNewRAMs.value / 1000).format("DDMMYYYY"),
+          name: dayjs
+            .unix(Number(dateForNewRAMs.value) / 1000)
+            .format("DDMMYYYY"),
           folder: {},
           "@microsoft.graph.conflictBehavior": "rename", // Handle conflicts by renaming
         }),
@@ -273,7 +265,11 @@ const createNewRAMS = async () => {
   }
 };
 
-const copyFileToNewFolder = async (fileId, newFolderId, fileName) => {
+const copyFileToNewFolder = async (
+  fileId: string,
+  newFolderId: string,
+  fileName: string
+) => {
   try {
     const copyResponse = await fetch(
       `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/copy`,

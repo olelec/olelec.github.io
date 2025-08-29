@@ -6,7 +6,7 @@
           ? 'width: 80%; height: 90vh;'
           : 'width: 60em; min-height: 60vh'
       "
-      :title="`Directory: ${props.directory.name}`"
+      :title="`Directory: ${props.directory?.name}`"
       :bordered="false"
       size="huge"
       role="dialog"
@@ -79,7 +79,12 @@
           </n-button>
         </n-button-group>
         <n-button-group style="float: right">
-          <n-button @click="open(directory.webUrl)" type="info" tertiary round>
+          <n-button
+            @click="open(directory?.webUrl || '')"
+            type="info"
+            tertiary
+            round
+          >
             <n-icon> <Cloud /> </n-icon>
             OneDrive
           </n-button>
@@ -96,29 +101,24 @@ import { NIcon, useNotification, useLoadingBar } from "naive-ui";
 import { FileExcel, FileWord, FilePdf, File, Download, Edit } from "@vicons/fa";
 import { PreviewFilled } from "@vicons/material";
 import { Folder, Cloud } from "@vicons/ionicons5";
+import { DriveItem } from "../views/DocumentsView.vue";
+
+export interface Directory {
+  id: string;
+  name: string;
+  webUrl: string;
+}
 
 const notification = useNotification();
 const loadingBar = useLoadingBar();
 
-const props = defineProps({
-  folderContents: {
-    type: Array,
-    required: true,
-  },
-  accessToken: {
-    type: String,
-    required: true,
-  },
-  directory: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  folderContents: DriveItem[] | undefined;
+  accessToken: string;
+  directory: Directory | undefined;
+}>();
 
-const show = defineModel({
-  prop: "show",
-  event: "update:show",
-});
+const show = defineModel<boolean>("show");
 
 const checkedKeys = ref<string[]>([]);
 const previewUrl = ref<string>("");
@@ -127,11 +127,13 @@ const emit = defineEmits(["close"]);
 
 const updateCheckedKeys = (keys: Array<string>) => {
   if (keys.length === 0) previewUrl.value = "";
-  checkedKeys.value = keys.filter((key) => !key.includes(props.directory.id));
+  checkedKeys.value = keys.filter(
+    (key) => !key.includes(props.directory?.id || "")
+  );
 };
 const openWebEditor = () => {
   const files = checkedKeys.value;
-  const selectedFile: any = props.folderContents.find(
+  const selectedFile: any = props.folderContents?.find(
     (file: any) => file.id === files[0].split("--")[0]
   );
   const url = selectedFile.webUrl;
@@ -236,7 +238,7 @@ const preview = async () => {
     });
   }
 };
-const open = (url) => {
+const open = (url: string | URL) => {
   window.open(url, "_blank");
 };
 const closeModal = () => {
@@ -261,11 +263,11 @@ const tree = computed<TreeOption[]>(() => {
           prefix: () => h(NIcon, null, { default: () => h(Folder) }),
           children: [
             {
-              label: props.directory.name,
-              key: props.directory.id,
+              label: props.directory?.name,
+              key: props.directory?.id,
               checkboxDisabled: true,
               prefix: () => h(NIcon, null, { default: () => h(Folder) }),
-              children: props.folderContents.map((file) => {
+              children: props.folderContents?.map((file) => {
                 const fileName = file.name;
                 return {
                   label: fileName,
@@ -303,7 +305,7 @@ const getFileIconColor = (filename: string) => {
 };
 
 const defaultExpandedKeys = computed(() => {
-  return ["oneDrive", "RAMS", props.directory.id];
+  return ["oneDrive", "RAMS", props.directory?.id];
 });
 </script>
 
