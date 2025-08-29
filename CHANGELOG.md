@@ -1,3 +1,11 @@
+## [v1.1.8] - 2025-08-29
+
+- build: reenabled analysis on prs
+- build: analysis on main branch only
+- docs: added comment
+- feat: added carousel of images for desktop
+- feat: show randomised images under new tabs
+
 ## [v1.1.7] - 2025-08-29
 
 - build: added build step as smoke test
