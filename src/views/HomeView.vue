@@ -43,7 +43,11 @@ import {
   EmailFilled,
 } from "@vicons/material";
 
-const numberOfImages = ref(6);
+/**
+ * The constant `numberOfImages` specifies the total number of images
+ * to be used or displayed in the component.
+ */
+const numberOfImages = 6;
 
 const refurbishmentImages = computed(() => {
   const allImages = [
@@ -69,7 +73,7 @@ const refurbishmentImages = computed(() => {
     projectImage20,
   ];
   const shuffled = allImages.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, numberOfImages.value);
+  return shuffled.slice(0, numberOfImages);
 });
 
 const industrialImages = computed(() => {
@@ -84,7 +88,7 @@ const industrialImages = computed(() => {
     industrialImage8,
   ];
   const shuffled = allImages.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, numberOfImages.value);
+  return shuffled.slice(0, numberOfImages);
 });
 
 const drivewayImages = computed(() => {
@@ -98,7 +102,7 @@ const drivewayImages = computed(() => {
     drivewayImage7,
   ];
   const shuffled = allImages.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, numberOfImages.value);
+  return shuffled.slice(0, numberOfImages);
 });
 </script>
 
