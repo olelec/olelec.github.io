@@ -43,6 +43,8 @@ import {
   EmailFilled,
 } from "@vicons/material";
 
+const numberOfImages = ref(6);
+
 const refurbishmentImages = computed(() => {
   const allImages = [
     projectImage1,
@@ -67,7 +69,7 @@ const refurbishmentImages = computed(() => {
     projectImage20,
   ];
   const shuffled = allImages.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 7);
+  return shuffled.slice(0, numberOfImages.value);
 });
 
 const industrialImages = computed(() => {
@@ -82,7 +84,7 @@ const industrialImages = computed(() => {
     industrialImage8,
   ];
   const shuffled = allImages.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 7);
+  return shuffled.slice(0, numberOfImages.value);
 });
 
 const drivewayImages = computed(() => {
@@ -96,7 +98,7 @@ const drivewayImages = computed(() => {
     drivewayImage7,
   ];
   const shuffled = allImages.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 7);
+  return shuffled.slice(0, numberOfImages.value);
 });
 </script>
 
@@ -154,7 +156,7 @@ const drivewayImages = computed(() => {
     <h2>Our Work</h2>
   </div>
   <section class="work" id="work">
-    <n-tabs type="segment" animated>
+    <n-tabs type="segment" animated id="mobile-images">
       <n-tab-pane name="refurbishments" tab="Refurbishments">
         <div class="projects-grid">
           <n-image-group>
@@ -201,6 +203,61 @@ const drivewayImages = computed(() => {
         </div>
       </n-tab-pane>
     </n-tabs>
+    <n-carousel
+      id="desktop-images"
+      effect="card"
+      prev-slide-style="transform: translateX(-150%) translateZ(-800px);"
+      next-slide-style="transform: translateX(50%) translateZ(-800px);"
+      style="height: 100vh"
+      :show-dots="false"
+      :autoplay="true"
+    >
+      <n-carousel-item :style="{ width: '60%' }">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in refurbishmentImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-carousel-item>
+      <n-carousel-item :style="{ width: '60%' }">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in drivewayImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-carousel-item>
+      <n-carousel-item :style="{ width: '60%' }">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in industrialImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-carousel-item>
+    </n-carousel>
   </section>
 
   <section class="contact" id="contact">
@@ -396,6 +453,14 @@ iframe {
 
   .enquiry-container {
     height: 150vh;
+  }
+  #desktop-images {
+    display: none;
+  }
+}
+@media (min-width: 601px) {
+  #mobile-images {
+    display: none;
   }
 }
 </style>
