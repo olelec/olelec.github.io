@@ -1,3 +1,12 @@
+## [v1.1.7] - 2025-08-29
+
+- build: added build step as smoke test
+- build: added sonar coverage exclusions
+- deps: upversion
+- feat: improve types for documents
+- feat: improve navigation for staff
+- feat: added katex equation display
+
 ## [v1.1.6] - 2025-08-28
 
 - feat: add new images
