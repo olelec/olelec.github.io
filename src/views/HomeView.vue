@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import projectImage1 from "@/assets/Project1 (1).jpg";
 import projectImage2 from "@/assets/Project1 (2).jpg";
 import projectImage3 from "@/assets/Project1 (3).jpg";
