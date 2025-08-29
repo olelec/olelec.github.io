@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import projectImage1 from "@/assets/Project1 (1).jpg";
 import projectImage2 from "@/assets/Project1 (2).jpg";
 import projectImage3 from "@/assets/Project1 (3).jpg";
@@ -43,47 +43,67 @@ import {
   EmailFilled,
 } from "@vicons/material";
 
-const refurbishmentImages = ref([
-  projectImage1,
-  projectImage2,
-  projectImage3,
-  projectImage4,
-  projectImage5,
-  projectImage6,
-  projectImage7,
-  projectImage8,
-  projectImage9,
-  projectImage10,
-  projectImage11,
-  projectImage12,
-  projectImage13,
-  projectImage14,
-  projectImage15,
-  projectImage16,
-  projectImage17,
-  projectImage18,
-  projectImage19,
-  projectImage20,
-]);
-const industrialImages = ref([
-  industrialImage1,
-  industrialImage2,
-  industrialImage3,
-  industrialImage4,
-  industrialImage5,
-  industrialImage6,
-  industrialImage7,
-  industrialImage8,
-]);
-const drivewayImages = ref([
-  drivewayImage1,
-  drivewayImage2,
-  drivewayImage3,
-  drivewayImage4,
-  drivewayImage5,
-  drivewayImage6,
-  drivewayImage7,
-]);
+/**
+ * The constant `numberOfImages` specifies the total number of images
+ * to be used or displayed in the component.
+ */
+const numberOfImages = 6;
+
+const refurbishmentImages = computed(() => {
+  const allImages = [
+    projectImage1,
+    projectImage2,
+    projectImage3,
+    projectImage4,
+    projectImage5,
+    projectImage6,
+    projectImage7,
+    projectImage8,
+    projectImage9,
+    projectImage10,
+    projectImage11,
+    projectImage12,
+    projectImage13,
+    projectImage14,
+    projectImage15,
+    projectImage16,
+    projectImage17,
+    projectImage18,
+    projectImage19,
+    projectImage20,
+  ];
+  const shuffled = allImages.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, numberOfImages);
+});
+
+const industrialImages = computed(() => {
+  const allImages = [
+    industrialImage1,
+    industrialImage2,
+    industrialImage3,
+    industrialImage4,
+    industrialImage5,
+    industrialImage6,
+    industrialImage7,
+    industrialImage8,
+  ];
+  const shuffled = allImages.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, numberOfImages);
+});
+
+const drivewayImages = computed(() => {
+  const allImages = [
+    drivewayImage1,
+    drivewayImage2,
+    drivewayImage3,
+    drivewayImage4,
+    drivewayImage5,
+    drivewayImage6,
+    drivewayImage7,
+  ];
+  const shuffled = allImages.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, numberOfImages);
+});
 </script>
 
 <template>
@@ -136,53 +156,112 @@ const drivewayImages = ref([
       />
     </div>
   </section>
-
+  <div class="section-title">
+    <h2>Our Work</h2>
+  </div>
   <section class="work" id="work">
-    <div class="section-title">
-      <h2>Our Work</h2>
-    </div>
-    <h3>Refurbishments</h3>
-    <div class="projects-grid">
-      <n-image-group>
-        <n-space justify="center">
-          <n-image
-            v-for="url in refurbishmentImages"
-            :src="url"
-            object-fit="cover"
-            width="300"
-            height="400"
-          />
-        </n-space>
-      </n-image-group>
-    </div>
-    <h3>Driveways</h3>
-    <div class="projects-grid">
-      <n-image-group>
-        <n-space justify="center">
-          <n-image
-            v-for="url in drivewayImages"
-            :src="url"
-            object-fit="cover"
-            width="300"
-            height="400"
-          />
-        </n-space>
-      </n-image-group>
-    </div>
-    <h3>Industrial Work</h3>
-    <div class="projects-grid">
-      <n-image-group>
-        <n-space justify="center">
-          <n-image
-            v-for="url in industrialImages"
-            :src="url"
-            object-fit="cover"
-            width="300"
-            height="400"
-          />
-        </n-space>
-      </n-image-group>
-    </div>
+    <n-tabs type="segment" animated id="mobile-images">
+      <n-tab-pane name="refurbishments" tab="Refurbishments">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in refurbishmentImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-tab-pane>
+      <n-tab-pane name="driveways" tab="Driveways">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in drivewayImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-tab-pane>
+      <n-tab-pane name="industrial" tab="Industrial">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in industrialImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-tab-pane>
+    </n-tabs>
+    <n-carousel
+      id="desktop-images"
+      effect="card"
+      prev-slide-style="transform: translateX(-150%) translateZ(-800px);"
+      next-slide-style="transform: translateX(50%) translateZ(-800px);"
+      style="height: 100vh"
+      :show-dots="false"
+      :autoplay="true"
+    >
+      <n-carousel-item :style="{ width: '60%' }">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in refurbishmentImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-carousel-item>
+      <n-carousel-item :style="{ width: '60%' }">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in drivewayImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-carousel-item>
+      <n-carousel-item :style="{ width: '60%' }">
+        <div class="projects-grid">
+          <n-image-group>
+            <n-space justify="center">
+              <n-image
+                v-for="url in industrialImages"
+                :src="url"
+                object-fit="cover"
+                width="300"
+                height="400"
+              />
+            </n-space>
+          </n-image-group>
+        </div>
+      </n-carousel-item>
+    </n-carousel>
   </section>
 
   <section class="contact" id="contact">
@@ -373,6 +452,18 @@ iframe {
 @media (max-width: 600px) {
   #map,
   .service-areas {
+    display: none;
+  }
+
+  .enquiry-container {
+    height: 150vh;
+  }
+  #desktop-images {
+    display: none;
+  }
+}
+@media (min-width: 601px) {
+  #mobile-images {
     display: none;
   }
 }
