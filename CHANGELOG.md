@@ -1,3 +1,7 @@
+## [v1.1.10] - 2025-09-10
+
+- build(deps-dev): bump vite in the npm_and_yarn group across 1 directory
+
 ## [v1.1.9] - 2025-08-29
 
 - chore: minor sonar changes
