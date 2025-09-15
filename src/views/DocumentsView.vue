@@ -133,6 +133,12 @@ interface RowData {
   id: string;
 }
 
+interface RootFilesResponse {
+  "@odata.context"?: string;
+  value?: DriveItem[];
+  error?: string;
+}
+
 dayjs.extend(customParseFormat);
 dayjs.extend(relativeTime);
 
@@ -303,7 +309,7 @@ const fetchTemplateFiles = async () => {
   try {
     if (rootFiles.value?.length === 0) await fetchRootFiles();
 
-    const templateDir = rootFiles.value.find(
+    const templateDir = rootFiles.value?.find(
       (item: DriveItem) => item?.name === "Templates"
     );
     if (!templateDir) {
@@ -349,14 +355,14 @@ const fetchRootFiles = async () => {
         headers: { Authorization: `Bearer ${accessToken.value}` },
       }
     );
-    const rootFilesData: DriveItem[] | any = await rootResponse.json();
+    const rootFilesData: RootFilesResponse = await rootResponse.json();
     if (rootFilesData.error) {
       throw new Error(rootFilesData.error);
     }
     RAMsID.value =
-      rootFilesData?.value.find((item: DriveItem) => item?.name === "RAMS")
+      rootFilesData?.value?.find((item: DriveItem) => item?.name === "RAMS")
         ?.id || "";
-    rootFiles.value = rootFilesData;
+    rootFiles.value = rootFilesData.value ?? [];
     return rootFiles.value;
   } catch (err) {
     notification.error({
