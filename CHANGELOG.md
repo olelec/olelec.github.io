@@ -1,3 +1,8 @@
+## [v1.1.11] - 2025-09-15
+
+- fix: type for files
+- feat: added ability to manually deploy tags to gh pages
+
 ## [v1.1.10] - 2025-09-10
 
 - build(deps-dev): bump vite in the npm_and_yarn group across 1 directory
