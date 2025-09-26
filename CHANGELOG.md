@@ -1,3 +1,7 @@
+## [v1.2.1] - 2025-09-26
+
+- feat: added ability to add template files to existing directories (#62)
+
 ## [v1.1.11] - 2025-09-15
 
 - fix: type for files
