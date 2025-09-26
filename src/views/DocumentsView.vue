@@ -31,10 +31,10 @@
       </template>
     </n-data-table>
     <CreateRAMsModal
-      :templateFiles="templateFiles"
       v-model:show="showModal"
-      :RAMsID="RAMsID"
+      :destinationDirectoryId="RAMsID"
       :accessToken="accessToken"
+      :newDirectoryCreated="true"
       @create="
         showModal = false;
         fetchRAMsFiles();
@@ -46,6 +46,7 @@
       :accessToken="accessToken"
       :directory="directory"
       @close="showFolderModal = false"
+      @refresh="updateFolderContents"
     />
     <n-float-button-group position="fixed" bottom="90px" right="30px">
       <n-float-button
@@ -97,6 +98,9 @@ import {
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useFilesStore } from "../store/filesStore";
+
+const filesStore = useFilesStore();
 
 export interface DriveItem {
   createdBy: {
@@ -209,6 +213,11 @@ const openFolder = async (
       keepAliveOnHover: true,
     });
   }
+};
+const updateFolderContents = async () => {
+  // delay for 2 seconds to allow api to update
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  folderContents.value = await fetchFiles(directory.value.id);
 };
 const fetchFiles = async (fileID: string): Promise<DriveItem[]> => {
   loadingBar.start();
@@ -329,6 +338,7 @@ const fetchTemplateFiles = async () => {
       return item.name.includes(".");
     });
     templateFiles.value = filteredFiles;
+    filesStore.SET_TEMPLATE_FILES(filteredFiles);
     loadingBar.finish();
   } catch (error) {
     loadingBar.error();
@@ -373,7 +383,7 @@ const fetchRootFiles = async () => {
     console.error("Error fetching root files:", err);
   }
 };
-const deleteItem = async (itemId: number) => {
+const deleteItem = async (itemId: string) => {
   loadingBar.start();
   try {
     const response = await fetch(
@@ -553,7 +563,7 @@ const columns = computed(() => {
             h(
               NPopconfirm,
               {
-                onPositiveClick: () => deleteItem(Number(row.id)),
+                onPositiveClick: () => deleteItem(row.id),
                 "positive-text": "Delete",
               },
               {
