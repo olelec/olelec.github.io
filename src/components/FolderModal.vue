@@ -12,12 +12,12 @@
       role="dialog"
       aria-modal="true"
     >
-      <div v-if="tree.length === 0">
+      <div v-if="treeOptions.length === 0">
         <br />
       </div>
       <n-tree
         block-line
-        :data="tree"
+        :data="treeOptions"
         :default-expanded-keys="defaultExpandedKeys"
         expand-on-click
         cascade
@@ -59,23 +59,22 @@
             <n-icon> <Edit /> </n-icon>
             Web Editor
           </n-button>
-          <n-button
-            @click="downloadItems(false)"
-            :disabled="checkedKeys.length !== 1"
-            type="info"
-            round
+          <n-dropdown
+            :options="options"
+            trigger="click"
+            placement="bottom-start"
+            :render-icon="renderDropdownIcon"
+            :render-label="renderDropdownLabel"
+            @select="handleSelect"
           >
-            <n-icon> <Download /> </n-icon>
-            Download
-          </n-button>
-          <n-button
-            @click="downloadItems(true)"
-            :disabled="checkedKeys.length !== 1"
-            type="error"
-            round
-          >
-            <n-icon> <file-pdf /> </n-icon>
-            Download as PDF
+            <n-button :disabled="checkedKeys.length !== 1" type="info" round>
+              <n-icon><Download /></n-icon>
+              Download
+            </n-button>
+          </n-dropdown>
+          <n-button @click="addFiles" type="error" round ghost>
+            <n-icon> <Create /> </n-icon>
+            Add New
           </n-button>
         </n-button-group>
         <n-button-group style="float: right">
@@ -90,24 +89,51 @@
           </n-button>
         </n-button-group>
       </template>
+      <CreateRAMsModal
+        v-if="showModal"
+        :accessToken="props.accessToken ?? ''"
+        :destinationDirectoryId="props.directory?.id || ''"
+        :newDirectoryCreated="false"
+        v-model:show="showModal"
+        @create="
+          showModal = false;
+          refreshFolderContents();
+        "
+      />
     </n-card>
   </n-modal>
 </template>
 
 <script setup lang="ts">
-import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
-import type { TreeOption } from "naive-ui";
+import {
+  computed,
+  h,
+  defineProps,
+  defineEmits,
+  defineModel,
+  ref,
+  watch,
+  onBeforeMount,
+} from "vue";
+import type { DropdownOption, TreeOption } from "naive-ui";
 import { NIcon, useNotification, useLoadingBar } from "naive-ui";
 import { FileExcel, FileWord, FilePdf, File, Download, Edit } from "@vicons/fa";
 import { PreviewFilled } from "@vicons/material";
-import { Folder, Cloud } from "@vicons/ionicons5";
+import { Folder, Cloud, Create } from "@vicons/ionicons5";
 import { DriveItem } from "../views/DocumentsView.vue";
+import CreateRAMsModal from "./CreateRAMsModal.vue";
 
 export interface Directory {
   id: string;
   name: string;
   webUrl: string;
 }
+
+onBeforeMount(() => {
+  if (props.folderContents) {
+    treeOptions.value = getTreeOptions();
+  }
+});
 
 const notification = useNotification();
 const loadingBar = useLoadingBar();
@@ -120,17 +146,72 @@ const props = defineProps<{
 
 const show = defineModel<boolean>("show");
 
+const showModal = ref(false);
 const checkedKeys = ref<string[]>([]);
 const previewUrl = ref<string>("");
+const treeOptions = ref<TreeOption[]>([]);
 
-const emit = defineEmits(["close"]);
+const emit = defineEmits(["close", "refresh"]);
 
-const updateCheckedKeys = (keys: Array<string>) => {
-  if (keys.length === 0) previewUrl.value = "";
-  checkedKeys.value = keys.filter(
-    (key) => !key.includes(props.directory?.id || "")
-  );
+const addFiles = () => {
+  showModal.value = true;
 };
+
+const fileType = computed(() => {
+  if (checkedKeys.value.length !== 1) return "";
+  const key = checkedKeys.value[0];
+  const fileName = key.split("--")[1] || "";
+  return fileName.split(".").pop()?.toLowerCase() || "";
+});
+
+const options = computed(() => {
+  if (checkedKeys.value.length !== 1) return [];
+  const opts = [{ key: "original", label: "not used" }];
+  if (fileType.value !== "pdf") {
+    opts.push({ key: "pdf", label: "not used" });
+  }
+  return opts;
+});
+
+function renderDropdownIcon(option: DropdownOption) {
+  if (option.key === "original") {
+    return h(
+      NIcon,
+      { color: getFileIconColor(checkedKeys.value[0]) },
+      { default: () => h(getFileIcon(checkedKeys.value[0])) }
+    );
+  } else if (option.key === "pdf") {
+    return h(NIcon, { color: "#cc0000" }, { default: () => h(FilePdf) });
+  }
+  return null;
+}
+
+function renderDropdownLabel(option: DropdownOption) {
+  if (option.key === "original") {
+    return "Download " + fileType.value.toUpperCase();
+  }
+  if (option.key === "pdf") {
+    return "Download PDF";
+  }
+  return null;
+}
+
+const handleSelect = (key: string) => {
+  if (checkedKeys.value.length !== 1) return;
+  downloadItems({ pdf: key === "pdf" });
+};
+
+const updateCheckedKeys = (keys: string[]) => {
+  if (keys.length === 0) {
+    previewUrl.value = "";
+  }
+  checkedKeys.value = keys.filter((key) => key !== props.directory?.id);
+};
+
+function refreshFolderContents() {
+  emit("refresh");
+}
+
 const openWebEditor = () => {
   const files = checkedKeys.value;
   const selectedFile: any = props.folderContents?.find(
@@ -140,7 +221,7 @@ const openWebEditor = () => {
 
   open(url);
 };
-const downloadItems = async (pdf: boolean = false) => {
+const downloadItems = async (options: { pdf: boolean }) => {
   loadingBar.start();
   const files = checkedKeys.value;
 
@@ -148,12 +229,12 @@ const downloadItems = async (pdf: boolean = false) => {
     const pdfPromises = files.map((file) => {
       const [fileId, fileName] = file.split("--");
 
-      download(fileId, fileName, pdf);
+      download(fileId, fileName, { pdf: options.pdf });
     });
     await Promise.all(pdfPromises);
     loadingBar.finish();
     notification.success({
-      content: "PDF downloaded successfully.",
+      content: "Successfully downloaded file",
       duration: 2500,
       keepAliveOnHover: true,
     });
@@ -167,12 +248,16 @@ const downloadItems = async (pdf: boolean = false) => {
     });
   }
 };
-const download = async (fileID: string, fileName: string, pdf: boolean) => {
+const download = async (
+  fileID: string,
+  fileName: string,
+  options: { pdf: boolean }
+) => {
   try {
     let format;
     if (fileName.includes(".pdf")) {
       format = "";
-    } else if (pdf) {
+    } else if (options.pdf) {
       format = "?format=pdf";
     } else {
       format = "";
@@ -247,8 +332,7 @@ const closeModal = () => {
   checkedKeys.value = [];
 };
 
-// computed
-const tree = computed<TreeOption[]>(() => {
+const getTreeOptions = (): TreeOption[] => {
   return [
     {
       label: "OneDrive",
@@ -288,7 +372,7 @@ const tree = computed<TreeOption[]>(() => {
       ],
     },
   ];
-});
+};
 
 const getFileIcon = (fileName: string) => {
   if (fileName.includes(".xlsx")) return FileExcel;
@@ -307,6 +391,15 @@ const getFileIconColor = (filename: string) => {
 const defaultExpandedKeys = computed(() => {
   return ["oneDrive", "RAMS", props.directory?.id];
 });
+
+watch(
+  () => props.folderContents,
+  (newVal) => {
+    if (newVal) {
+      treeOptions.value = getTreeOptions();
+    }
+  }
+);
 </script>
 
 <style lang="scss">

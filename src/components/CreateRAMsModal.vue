@@ -2,14 +2,14 @@
   <n-modal v-model:show="show" :on-after-leave="closeModal">
     <n-card
       style="width: 50em; min-height: 60vh"
-      title="Create New RAMS"
+      :title="newDirectoryCreated ? 'Create New RAMS' : 'Add Files to Folder'"
       :bordered="false"
       size="huge"
       role="dialog"
       aria-modal="true"
     >
-      Directory Name
-      <div class="input-group">
+      <a v-if="newDirectoryCreated"> Directory Name </a>
+      <div v-if="newDirectoryCreated" class="input-group">
         <n-date-picker
           v-model:value="dateForNewRAMs"
           type="date"
@@ -19,8 +19,8 @@
         />
       </div>
       <br />
-      File Name
-      <div class="input-group">
+      <a v-if="newDirectoryCreated"> File Name </a>
+      <div v-if="newDirectoryCreated" class="input-group">
         <n-input-group>
           <n-input-group-label> Type </n-input-group-label>
           <n-input-group-label> - </n-input-group-label>
@@ -80,11 +80,14 @@
 
       <template #footer>
         <n-button
-          :disabled="newFileTypes.length === 0 || !dateForNewRAMs"
+          :disabled="
+            newFileTypes.length === 0 ||
+            (!dateForNewRAMs && newDirectoryCreated)
+          "
           @click="createNewRAMS"
           type="primary"
         >
-          Create
+          {{ newDirectoryCreated ? "Create" : "Add" }}
         </n-button>
       </template>
     </n-card>
@@ -95,19 +98,22 @@
 import { computed, h, defineProps, defineEmits, defineModel, ref } from "vue";
 import dayjs from "dayjs";
 import { type TransferRenderTargetLabel, NIcon } from "naive-ui";
-import { DriveItem } from "../views/DocumentsView.vue";
-
 import { FileExcel, FileWord, File } from "@vicons/fa";
 import { useNotification, useLoadingBar } from "naive-ui";
+import { useFilesStore } from "../store/filesStore";
+import { DriveItem } from "../views/DocumentsView.vue";
 
 const notification = useNotification();
+const filesStore = useFilesStore();
 const loadingBar = useLoadingBar();
 
 const props = defineProps<{
-  templateFiles: DriveItem[] | undefined;
-  RAMsID: string;
+  destinationDirectoryId: string;
   accessToken: string;
+  newDirectoryCreated?: boolean;
 }>();
+
+const templateFiles = computed(() => filesStore.getTemplateFiles);
 
 const show = defineModel<boolean>("show");
 
@@ -119,7 +125,7 @@ const projectLocation = ref<string>("");
 const newFileTypes = ref<string[]>([]);
 
 const options = computed(() => {
-  return props.templateFiles?.map((file) => {
+  return templateFiles.value?.map((file) => {
     const value = `${file.id}--${file.name}`;
     const label = file.name.split(".")[0];
     return { value, label };
@@ -208,35 +214,38 @@ const renderLabel: TransferRenderTargetLabel = ({ option }) => {
 const createNewRAMS = async () => {
   loadingBar.start();
   try {
-    const newFolderResponse = await fetch(
-      "https://graph.microsoft.com/v1.0/me/drive/items/" +
-        props.RAMsID +
-        "/children",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${props.accessToken}`,
-        },
-        body: JSON.stringify({
-          name: dayjs
-            .unix(Number(dateForNewRAMs.value) / 1000)
-            .format("DDMMYYYY"),
-          folder: {},
-          "@microsoft.graph.conflictBehavior": "rename", // Handle conflicts by renaming
-        }),
+    let newFolderId = props.destinationDirectoryId;
+    if (props.newDirectoryCreated) {
+      const newFolderResponse = await fetch(
+        "https://graph.microsoft.com/v1.0/me/drive/items/" +
+          props.destinationDirectoryId +
+          "/children",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${props.accessToken}`,
+          },
+          body: JSON.stringify({
+            name: dayjs
+              .unix(Number(dateForNewRAMs.value) / 1000)
+              .format("DDMMYYYY"),
+            folder: {},
+            "@microsoft.graph.conflictBehavior": "rename", // Handle conflicts by renaming
+          }),
+        }
+      );
+      if (!newFolderResponse.ok) {
+        throw new Error("Error creating new folder");
       }
-    );
-    if (!newFolderResponse.ok) {
-      throw new Error("Error creating new folder");
+      notification.success({
+        content: "New folder created successfully.",
+        duration: 2500,
+        keepAliveOnHover: true,
+      });
+      const newFolder = await newFolderResponse.json();
+      newFolderId = newFolder.id;
     }
-    notification.success({
-      content: "New folder created successfully.",
-      duration: 2500,
-      keepAliveOnHover: true,
-    });
-    const newFolder = await newFolderResponse.json();
-    const newFolderId = newFolder.id;
 
     const createFilePromises = newFileTypes.value.map((file) => {
       const [fileID, fileName] = file.split("--");
@@ -304,14 +313,36 @@ const copyFileToNewFolder = async (
   }
 };
 
-const defaultExpandedKeys = computed(() => {
-  if (!dateForNewRAMs.value) return ["oneDrive", "RAMS"];
-  return [
-    "oneDrive",
-    "RAMS",
-    dayjs.unix(dateForNewRAMs.value / 1000).format("DDMMYYYY"),
-  ];
-});
+const fetchFiles = async (fileID: string): Promise<DriveItem[]> => {
+  loadingBar.start();
+  try {
+    const response = await fetch(
+      `https://graph.microsoft.com/v1.0/me/drive/items/${fileID}/children`,
+      {
+        headers: { Authorization: `Bearer ${props.accessToken}` },
+      }
+    );
+    const data = await response.json();
+
+    if (!data.value) throw new Error("No files in response");
+
+    const responseData = data.value as DriveItem[];
+
+    if (!data) throw new Error(data.error);
+
+    loadingBar.finish();
+    return responseData;
+  } catch (error) {
+    loadingBar.error();
+    notification.error({
+      content: "Error fetching files. Please try again.",
+      duration: 2500,
+      keepAliveOnHover: true,
+    });
+    console.error("Error fetching files:", error);
+    throw error;
+  }
+};
 </script>
 
 <style scoped style="scss">
