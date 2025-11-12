@@ -1,3 +1,7 @@
+## [v1.2.2] - 2025-11-12
+
+- build(deps-dev): bump vite in the npm_and_yarn group across 1 directory (#63)
+
 ## [v1.2.1] - 2025-09-26
 
 - feat: added ability to add template files to existing directories (#62)
