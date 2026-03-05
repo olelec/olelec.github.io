@@ -1,3 +1,7 @@
+## [v1.2.3] - 2026-03-05
+
+- build(deps-dev): bump lodash-es (#64)
+
 ## [v1.2.2] - 2025-11-12
 
 - build(deps-dev): bump vite in the npm_and_yarn group across 1 directory (#63)
